@@ -42,9 +42,9 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 35,
-    acceleration: 12,
-    deceleration: 15,
+    maxSpeed: 500,
+    acceleration: 50,
+    deceleration: 70,
     steeringSpeed: 2.5,
     driftFactor: 0.4,
     groundFriction: 0.88,
@@ -102,7 +102,7 @@ export class KartController {
 
     // Always update physics and position for proper inertia
     this.updateKartPhysics(this.config.timeManager.deltaTime);
-    
+
     this.maintainGroundContact();
     this.checkRespawnBounds();
     this.updateNetworkState();
@@ -121,21 +121,18 @@ export class KartController {
       const backward = this.config.keyInputManager.isKeyPressed("s");
       const left = this.config.keyInputManager.isKeyPressed("a");
       const right = this.config.keyInputManager.isKeyPressed("d");
-      const drift = this.config.keyInputManager.isKeyPressed(" ");
 
       const throttle = (forward ? 1 : 0) + (backward ? -1 : 0);
-      // STEERING MAPPING - DO NOT CHANGE THIS AGAIN!
-      // A key (left) should produce NEGATIVE steering for LEFT turn
-      // D key (right) should produce POSITIVE steering for RIGHT turn
-      // This matches the coordinate system: negative Y rotation = left, positive Y rotation = right
-      const steering = (right ? 1 : 0) + (left ? -1 : 0);
-      const driftInput = drift;
+      // STEERING MAPPING - CONSISTENT REGARDLESS OF SPAWN DIRECTION
+      // Left always means left relative to where the kart is facing
+      // Right always means right relative to where the kart is facing
+      const steering = (left ? 1 : 0) + (right ? -1 : 0);
 
-      if (throttle === 0 && steering === 0 && !driftInput) {
+      if (throttle === 0 && steering === 0) {
         return null;
       }
 
-      return { throttle, steering, drift: driftInput };
+      return { throttle, steering, drift: false };
     }
 
     return rawInput as KartControlInput;
@@ -157,7 +154,11 @@ export class KartController {
       steeringSmoothRate * this.config.timeManager.deltaTime,
     );
 
-    this.isDrifting = input.drift;
+    // Automatic drift when turning hard at speed
+    const speed = this.velocity.length();
+    const isHardTurning = Math.abs(this.steeringInput) > 0.6;
+    const isMovingFast = speed > 15;
+    this.isDrifting = isHardTurning && isMovingFast && Math.abs(this.throttleInput) > 0.3;
   }
 
   private smoothInput(current: number, target: number, rate: number): number {
@@ -206,29 +207,38 @@ export class KartController {
   private updateAngularVelocity(deltaTime: number): void {
     if (Math.abs(this.steeringInput) > 0.01) {
       const forwardSpeed = this.velocity.length();
-      
+
       // Only allow steering if the kart is moving (realistic behavior)
-      if (forwardSpeed > 0.5) { // Minimum speed required to turn
+      if (forwardSpeed > 0.5) {
+        // Minimum speed required to turn
         // Much more responsive steering for donut-making fun!
         // High responsiveness at low speeds, still good at high speeds
         const minSpeedFactor = 0.8; // Much higher minimum turning (was 0.3)
         const speedForTurning = 12; // Higher speed threshold for full effectiveness
-        const speedFactor = minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
-        const effectiveSteering = this.steeringInput * speedFactor;
+        const speedFactor =
+          minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
+        console.log("speedFactor", speedFactor, forwardSpeed, speedForTurning);
 
-        // Add to angular velocity instead of setting it directly (for inertia)
-        const angularAcceleration = effectiveSteering * this.kartConfig.steeringSpeed * 3; // Multiplier for responsiveness
-        this.angularVelocity += angularAcceleration * deltaTime;
-        
+        // Apply steering relative to current facing direction
+        // Positive steering = left turn, Negative steering = right turn
+        // This works regardless of spawn orientation
+        const steeringForce = this.steeringInput * speedFactor * this.kartConfig.steeringSpeed * 3;
+        this.angularVelocity += steeringForce * deltaTime;
+
         // Limit maximum angular velocity
         const maxAngularVelocity = 4; // Radians per second
-        this.angularVelocity = Math.max(-maxAngularVelocity, Math.min(maxAngularVelocity, this.angularVelocity));
+        this.angularVelocity = Math.max(
+          -maxAngularVelocity,
+          Math.min(maxAngularVelocity, this.angularVelocity),
+        );
       }
     }
-    
-    // Apply angular velocity to rotation (with inertia)
-    this.config.character.rotation.y += this.angularVelocity * deltaTime;
-    
+
+    // Apply angular velocity to rotation (in LOCAL space, not world space)
+    // This ensures steering is always relative to current facing direction
+    // Use rotateY which applies rotation in the object's local coordinate system
+    this.config.character.rotateY(this.angularVelocity * deltaTime);
+
     // Apply angular friction/damping when not steering or when stationary
     if (Math.abs(this.steeringInput) < 0.01 || this.velocity.length() < 0.5) {
       const angularFriction = 0.92; // How quickly rotation slows down
@@ -238,7 +248,7 @@ export class KartController {
 
   private applyResistance(deltaTime: number): void {
     const speed = this.velocity.length();
-    
+
     // Air resistance is always applied
     const airResistance = speed * this.kartConfig.airResistance;
     const airResistanceVector = this.velocity
@@ -285,10 +295,10 @@ export class KartController {
   private applyInputDecay(deltaTime: number): void {
     // Much slower input decay for more momentum and sliding
     const inputDecayRate = 3; // Reduced from 6 for more momentum
-    
+
     this.throttleInput = this.smoothInput(this.throttleInput, 0, inputDecayRate * deltaTime);
     this.steeringInput = this.smoothInput(this.steeringInput, 0, inputDecayRate * deltaTime);
-    this.isDrifting = false; // Stop drifting when no input
+    this.isDrifting = false; // Stop drifting when no inpu
   }
 
   private updateCharacterTransform(deltaTime: number): void {
@@ -301,8 +311,7 @@ export class KartController {
 
     if (groundHit) {
       const [distance] = groundHit;
-      const targetHeight =
-        this.config.character.position.y - distance + this.kartBounds.height / 2;
+      const targetHeight = this.config.character.position.y - distance + this.kartBounds.height / 2;
 
       const heightDifference = targetHeight - this.config.character.position.y;
       this.config.character.position.y += heightDifference * 10 * this.config.timeManager.deltaTime;
@@ -399,29 +408,29 @@ export class KartController {
   public getWheelPositions(): Vector3[] {
     const kartPosition = this.config.character.position;
     const kartRotation = this.config.character.rotation;
-    
+
     // Calculate wheel positions relative to kart center
     const wheelOffset = {
       rear: -1.0, // Distance from center to rear wheels (behind the kart)
-      side: 0.6,  // Distance from center to side wheels
+      side: 0.6, // Distance from center to side wheels
     };
 
     const positions: Vector3[] = [];
-    
+
     // Create rear wheel positions in local space
     const rearLeft = new Vector3(-wheelOffset.side, 0, wheelOffset.rear);
     const rearRight = new Vector3(wheelOffset.side, 0, wheelOffset.rear);
-    
+
     // Transform to world space using kart's transform
     const kartMatrix = this.config.character.matrixWorld;
     rearLeft.applyMatrix4(kartMatrix);
     rearRight.applyMatrix4(kartMatrix);
-    
+
     // Use ground detection to place skid marks on ground surface
-    [rearLeft, rearRight].forEach(wheelPos => {
+    [rearLeft, rearRight].forEach((wheelPos) => {
       this.rayCaster.set(wheelPos, new Vector3(0, -1, 0));
       const groundHit = this.config.collisionsManager.raycastFirst(this.rayCaster.ray);
-      
+
       if (groundHit) {
         const [distance] = groundHit;
         // Place skid mark slightly above the detected ground
@@ -431,16 +440,17 @@ export class KartController {
         wheelPos.y += 0.02;
       }
     });
-    
+
     positions.push(rearLeft, rearRight);
     return positions;
   }
 
   private updateSkiddingState(): void {
     const speed = this.velocity.length();
-    const hardBraking = this.throttleInput < -0.2 && speed > 1; // Easier to trigger
-    const heavyDrifting = this.isDrifting && speed > 2; // Easier to trigger
-    
-    this.isSkidding = this.isGrounded && (hardBraking || heavyDrifting);
+    const hardBraking = this.throttleInput < -0.2 && speed > 1;
+    const hardTurning = Math.abs(this.steeringInput) > 0.4 && speed > 8; // Easier to trigger
+    const isDriftingFast = this.isDrifting && speed > 5;
+
+    this.isSkidding = this.isGrounded && (hardBraking || hardTurning || isDriftingFast);
   }
-} 
+}

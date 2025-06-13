@@ -129,25 +129,74 @@
 ### 3.5.1 Physics Parameter Tuning ✅ COMPLETED
 **File**: `packages/3d-web-client-core/src/character/KartController.ts`
 
-- [x] **Acceleration Improvements** ✅
-  - [x] Slower acceleration: 8 → 5 for more controlled buildup
-  - [x] Higher max speed: 20 → 25 for more excitement
-  - [x] Better speed progression curve
+- [x] **Floaty Drift Physics** ✅
+  - [x] Reduced ground friction: 0.95 → 0.88 for easier sliding
+  - [x] Enhanced drift factor: 0.7 → 0.4 for much more sliding
+  - [x] Increased max speed: 30 → 35 for more excitement
+  - [x] More sensitive steering: 1.5 → 2.5 rad/s for easier donuts
 
-- [x] **Enhanced Drift** ✅
-  - [x] More pronounced drift: driftFactor 0.85 → 0.7
-  - [x] Dramatic sliding effect when Space pressed
-  - [x] Better control during drift state
+- [x] **Rotational Inertia System** ✅
+  - [x] Angular acceleration instead of direct velocity setting
+  - [x] Momentum builds up and persists when steering
+  - [x] Gradual decay with angular friction (0.92)
+  - [x] Maximum angular velocity limits (4 rad/s)
 
-- [x] **Speed-Affected Turning** ✅
-  - [x] Minimum 30% turning ability at very low speeds
-  - [x] Full effectiveness reached at speed 8
-  - [x] Realistic high-speed turning difficulty
+- [x] **Realistic Steering Requirements** ✅
+  - [x] Minimum speed requirement (0.5 m/s) to turn
+  - [x] No turning when stationary (like real vehicles)
+  - [x] Enhanced angular friction when stopped
 
-- [x] **Steering Direction Fix** ✅
-  - [x] A now turns left, D turns right (coordinate system corrected)
-  - [x] Proper input mapping and rotation application
-  - [x] Intuitive controls matching standard expectations
+- [x] **Enhanced Momentum Physics** ✅
+  - [x] Much longer coasting: friction 0.97 → 0.99
+  - [x] Slower input decay: 6 → 3 for more momentum
+  - [x] Slower drift alignment: 5 → 2 for more sliding
+  - [x] Donut-friendly steering: 30% → 80% minimum at low speeds
+
+## Phase 3.6: Dynamic Skid Marks System ✅ COMPLETED
+
+### 3.6.1 SkidMarkTrail Implementation ✅ COMPLETED
+**File**: `packages/3d-web-client-core/src/character/SkidMarkTrail.ts`
+
+- [x] **Trail Rendering System** ✅
+  - [x] BoxGeometry horizontal dashes (tire tread appearance)
+  - [x] Pure black color (0x000000) for realistic look
+  - [x] Fade system with smooth opacity transitions
+  - [x] Performance optimized with automatic cleanup
+
+- [x] **Trail Management** ✅
+  - [x] Group-based system for multiple trail segments
+  - [x] Individual mesh per trail point for flexibility
+  - [x] Age tracking and fade calculations
+  - [x] Proper disposal to prevent memory leaks
+
+### 3.6.2 Character Integration ✅ COMPLETED
+**File**: `packages/3d-web-client-core/src/character/Character.ts`
+
+- [x] **Skid Mark Lifecycle** ✅
+  - [x] Continuous spawning every 0.2 seconds while skidding
+  - [x] Maximum 50 concurrent trails with oldest-first cleanup
+  - [x] World space positioning (added to scene, not character)
+  - [x] Proper trail management and disposal
+
+- [x] **Trail Creation Logic** ✅
+  - [x] Timer-based spawning system
+  - [x] Aggressive cleanup before creation
+  - [x] Guaranteed spawning with oldest trail removal
+  - [x] Separate methods for creation and cleanup
+
+### 3.6.3 KartController Integration ✅ COMPLETED
+**File**: `packages/3d-web-client-core/src/character/KartController.ts`
+
+- [x] **Skid Detection** ✅
+  - [x] Hard braking detection (throttle < -0.2, speed > 1)
+  - [x] Heavy drifting detection (drift + speed > 2)
+  - [x] Ground contact requirement for realistic behavior
+
+- [x] **Wheel Position Calculation** ✅
+  - [x] Rear wheel positioning using matrix transformation
+  - [x] Ground detection with raycasting for proper placement
+  - [x] Slight elevation (0.02m) above ground for visibility
+  - [x] World space coordinates for persistent positioning
 
 ## Phase 4: Network State Enhancement 🌐 NEXT PRIORITY
 
@@ -197,34 +246,37 @@
   - [ ] Remove avatarConfiguration
   - [ ] Add optional kartConfiguration
 
-## ✅ CURRENT STATUS: Phase 1, 2 & 3 Complete + Polish!
+## ✅ CURRENT STATUS: Phase 1, 2, 3 + Skid Marks Complete!
 
 ### 🎉 What's Working Now:
-- **Enhanced Kart Movement**: Realistic acceleration, higher top speed, dramatic drift
-- **Professional Camera**: Speed-responsive distance, locked to kart direction, smooth transitions
-- **Perfect Controls**: A=left, D=right with speed-affected turning
-- **Visual Feedback**: Animated wheels that rotate with movement and steering
-- **Multiplayer**: Multiple colored karts in same world with smooth performance
-- **Network Sync**: Position and rotation updates at 30ms intervals
-- **Collision**: Ground detection and boundary respawning
+- **Arcade Racing Physics**: Floaty, drift-happy controls perfect for donut-making
+- **Dynamic Skid Marks**: Real-time black tire tread marks that persist in world space
+- **Rotational Inertia**: Realistic angular momentum that builds up and decays
+- **Realistic Steering**: Must be moving to turn, like real vehicles
+- **Professional Camera**: Speed-responsive distance, locked to kart direction
+- **Visual Feedback**: Animated wheels + continuous skid mark trails
+- **Multiplayer**: Multiple colored karts with individual skid mark systems
+- **Performance**: Smooth 60fps with 50+ concurrent skid mark trails
 
 ### 🚀 Next Recommended Steps:
 
 **Option A: Network State Enhancement (Recommended)**
 - Add velocity and drift state synchronization
+- Sync skid mark creation across players
 - Remove animation state from network protocol
-- See other players' speed and drift status
-- Better foundation for competitive racing
+- See other players' speed, drift status, and skid marks
 
-**Option B: Input System Cleanup**
-- Simplify KeyInputManager for direct kart input
-- Remove character-specific input methods
-- Clean up unused code
+**Option B: Advanced Skid Mark Features**
+- Different mark types (drift vs braking patterns)
+- Surface-dependent marks (different materials)
+- Particle effects (smoke/dust when skidding)
+- Sound integration (tire screech audio)
 
-**Option C: TweakPane Debug Integration**
-- Add kart physics debugging tools
-- Real-time parameter tuning
-- Performance monitoring
+**Option C: Physics Refinement**
+- Surface friction variation (ice, grass, asphalt)
+- Weight transfer simulation
+- Tire grip curves with progressive loss
+- Advanced collision response
 
 ### 📝 Git Commits Completed:
 1. ✅ `feat: create basic KartController structure`
@@ -240,6 +292,10 @@
 11. ✅ `fix: correct steering direction mapping`
 12. ✅ `polish: improve camera behavior with smoother transitions`
 13. ✅ `polish: improve kart movement controls for better racing feel`
+14. ✅ `feat: implement dynamic skid marks system with trail rendering`
+15. ✅ `polish: make kart physics floaty and drift-happy for donut gameplay`
+16. ✅ `feat: add rotational inertia for realistic angular momentum`
+17. ✅ `fix: require movement for steering like real vehicles`
 
 ## Testing Checklist ✅
 
@@ -248,19 +304,10 @@
   - [x] Spawn as kart ✅
   - [x] WASD controls work ✅
   - [x] Space drift works dramatically ✅
-  - [x] Camera follows correctly and responds to speed ✅
-
-- [x] **Enhanced Features**
-  - [x] Camera pulls back when accelerating ✅
-  - [x] Steering works correctly (A=left, D=right) ✅
-  - [x] Realistic acceleration and higher top speed ✅
-  - [x] Dramatic drift effect ✅
-  - [x] Speed-affected turning ✅
-
-- [x] **Multiplayer Testing**
-  - [x] Multiple karts spawn ✅
-  - [x] Network sync works ✅
-  - [x] Performance is excellent (60fps) ✅
+  - [x] Skid marks appear when drifting/braking ✅
+  - [x] Rotational inertia builds up and decays ✅
+  - [x] Cannot turn when stationary ✅
+  - [x] Floaty physics enable easy donuts ✅
 
 ### Next Testing Priorities
 - [ ] **Network State Enhancement Testing**

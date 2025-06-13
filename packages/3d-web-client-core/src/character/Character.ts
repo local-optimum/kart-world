@@ -72,7 +72,7 @@ export class Character extends Group {
   private maxSkidTrails: number = 50; // Doubled from 12 for better visual coverage
   private lastSkidMarkTime: number = 0; // Track when we last created new skid marks
   private skidMarkInterval: number = 0.2; // Create new skid marks every 0.2 seconds while skidding
-  
+
   public color: Color = new Color();
   public tooltip: CharacterTooltip;
   public speakingIndicator: CharacterSpeakingIndicator | null = null;
@@ -113,16 +113,16 @@ export class Character extends Group {
 
   private setTooltipHeights() {
     let height: number;
-    
+
     if (this.config.kartMode) {
       // For karts, set tooltip height above the kart body
-      height = 1.5; // Fixed height above kart
+      height = 1.5; // Fixed height above kar
     } else if (this.model && this.model.characterHeight) {
       height = characterHeightToTooltipHeightOffset(this.model.characterHeight);
     } else {
-      height = 1.5; // Default height
+      height = 1.5; // Default heigh
     }
-    
+
     this.tooltip.setHeightOffset(height);
     height += this.tooltip.scale.y;
 
@@ -232,15 +232,15 @@ export class Character extends Group {
 
     if (isSkidding) {
       // Always create new skid marks at regular intervals while skidding
-      if (!this.wasSkidding || (currentTime - this.lastSkidMarkTime) >= this.skidMarkInterval) {
+      if (!this.wasSkidding || currentTime - this.lastSkidMarkTime >= this.skidMarkInterval) {
         // Remove oldest trails to make room for new ones
         this.cleanupOldestTrails(wheelPositions.length);
-        
+
         // Always create new trails
         this.createNewSkidMarks(wheelPositions);
         this.lastSkidMarkTime = currentTime;
       }
-      
+
       // Continue adding points to existing trails
       this.continueSkidMarks(wheelPositions);
     } else if (!isSkidding && this.wasSkidding) {
@@ -269,7 +269,7 @@ export class Character extends Group {
         maxPoints: 50, // Shorter trails for faster turnover
         fadeTime: 5, // Fast fade
       });
-      
+
       trail.startTrail(position);
       this.skidMarkTrails.push(trail);
       this.config.composer.postPostScene.add(trail);
@@ -292,23 +292,23 @@ export class Character extends Group {
 
   private stopSkidMarks() {
     // Stop all active trails
-    this.skidMarkTrails.forEach(trail => {
+    this.skidMarkTrails.forEach((trail) => {
       trail.stopTrail();
     });
   }
 
   private updateSkidMarkTrails() {
     // Update all trails and remove empty ones
-    this.skidMarkTrails = this.skidMarkTrails.filter(trail => {
+    this.skidMarkTrails = this.skidMarkTrails.filter((trail) => {
       trail.update();
-      
+
       if (trail.isEmpty()) {
         // Remove from scene instead of character
         this.config.composer.postPostScene.remove(trail);
         trail.dispose();
         return false;
       }
-      
+
       return true;
     });
   }
@@ -320,8 +320,8 @@ export class Character extends Group {
 
     if (this.speakingIndicator) {
       this.speakingIndicator.setTime(time);
-      
-      // Position speaking indicator above character/kart
+
+      // Position speaking indicator above character/kar
       let indicatorPosition: Vector3;
       if (this.config.kartMode && this.kartMesh) {
         // Position above kart center
@@ -331,16 +331,16 @@ export class Character extends Group {
         indicatorPosition = this.model.headBone.getWorldPosition(new Vector3());
       } else {
         indicatorPosition = this.getWorldPosition(new Vector3());
-        indicatorPosition.y += 1.5; // Default height
+        indicatorPosition.y += 1.5; // Default heigh
       }
-      
+
       this.speakingIndicator.setBillboarding(indicatorPosition, this.config.cameraManager.camera);
     }
 
-    // Update model or kart
+    // Update model or kar
     if (this.config.kartMode) {
       // Kart-specific updates are handled by KartController
-      // Visual updates like wheel rotation are handled in updateKartMovement
+      // Visual updates like wheel rotation are handled in updateKartMovemen
     } else if (this.model) {
       this.model.update(deltaTime);
     }
@@ -373,7 +373,7 @@ export class Character extends Group {
     this.setTooltipHeights();
   }
 
-  // Helper method to get world direction for kart movement
+  // Helper method to get world direction for kart movemen
   getWorldDirection(target: Vector3): Vector3 {
     const quaternion = this.getWorldQuaternion(new Quaternion());
     return target.set(0, 0, 1).applyQuaternion(quaternion);
