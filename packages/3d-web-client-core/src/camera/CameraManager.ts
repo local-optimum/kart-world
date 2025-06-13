@@ -241,16 +241,18 @@ export class CameraManager {
     const speedRatio = Math.min(speed / maxKartSpeed, 1);
 
     // Dynamic distance: closer when stationary, further back at high speed
-    // Start at ~6m when stationary, pull back to 15m at max speed
-    const baseDistance = 6; // Start closer (was using maxDistance=15m)
-    const maxDistance = 15;
-    const dynamicDistance = baseDistance + (maxDistance - baseDistance) * speedRatio;
+    // Start at 6m when stationary, pull back to 11m at max speed (25% shorter than before)
+    const baseDistance = 6;
+    const maxDistance = 11; // Reduced from 15m
+    // Slower pull back: use square root to make the transition more gradual
+    const slowSpeedRatio = Math.sqrt(speedRatio);
+    const dynamicDistance = baseDistance + (maxDistance - baseDistance) * slowSpeedRatio;
 
     // Get kart forward direction for camera positioning
     const kartForward = new Vector3(0, 0, 1).applyEuler(kartRotation);
 
     // Look-ahead prediction: anticipate turns based on velocity direction
-    const lookAheadFactor = 0.3; // Reduced for better control
+    const lookAheadFactor = 0.4; // Increased from 0.3 for better anticipation
     const lookAheadPosition = kartPosition.clone();
 
     if (speed > 0.5) {

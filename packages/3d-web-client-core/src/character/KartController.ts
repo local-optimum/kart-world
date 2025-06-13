@@ -120,7 +120,7 @@ export class KartController {
       const drift = this.config.keyInputManager.isKeyPressed(" ");
 
       const throttle = (forward ? 1 : 0) + (backward ? -1 : 0);
-      const steering = (right ? 1 : 0) + (left ? -1 : 0);
+      const steering = (left ? 1 : 0) + (right ? -1 : 0);
 
       if (throttle === 0 && steering === 0 && !drift) {
         return null;
