@@ -231,6 +231,30 @@ export class CameraManager {
     this.setTarget(target);
   }
 
+  public updateForKart(kartPosition: Vector3, kartVelocity: Vector3): void {
+    // Calculate speed-responsive camera distance
+    const speed = kartVelocity.length();
+    const maxKartSpeed = 20; // Match KartController maxSpeed
+    const speedRatio = Math.min(speed / maxKartSpeed, 1);
+    
+    // Dynamic distance: 4m at standstill, up to 15m at max speed
+    const dynamicDistance = this.minDistance + (this.maxDistance - this.minDistance) * speedRatio;
+    
+    // Look-ahead prediction: anticipate turns based on velocity
+    const lookAheadFactor = 0.5; // How far ahead to look
+    const lookAheadPosition = kartPosition.clone().add(kartVelocity.clone().multiplyScalar(lookAheadFactor));
+    
+    // Height offset: 2.5m above kart for better racing view
+    const kartHeightOffset = 2.5;
+    const targetPosition = lookAheadPosition.clone();
+    targetPosition.y += kartHeightOffset;
+    
+    // Update camera target and distance
+    this.setTarget(targetPosition);
+    this.targetDistance = dynamicDistance;
+    this.desiredDistance = dynamicDistance;
+  }
+
   public reverseUpdateFromPositions(): void {
     const dx = this.camera.position.x - this.target.x;
     const dy = this.camera.position.y - this.target.y;

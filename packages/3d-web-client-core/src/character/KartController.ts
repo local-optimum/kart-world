@@ -348,4 +348,8 @@ export class KartController {
     this.minimumZ = spawnConfig.respawnTrigger.minZ;
     this.maximumZ = spawnConfig.respawnTrigger.maxZ;
   }
+
+  public getVelocity(): Vector3 {
+    return this.velocity.clone();
+  }
 } 

@@ -278,12 +278,10 @@ export class CharacterManager {
         this.config.sendUpdate(this.localController.networkState);
       }
 
-      const targetOffset = new Vector3();
-      targetOffset
-        .add(this.headTargetOffset)
-        .applyQuaternion(this.localCharacter.quaternion)
-        .add(this.localCharacter.position);
-      this.config.cameraManager.setTarget(targetOffset);
+      // Use kart-optimized camera with speed-responsive distance and look-ahead
+      const kartPosition = this.localCharacter.position;
+      const kartVelocity = this.localController.getVelocity();
+      this.config.cameraManager.updateForKart(kartPosition, kartVelocity);
 
       for (const [id, update] of this.config.remoteUserStates) {
         if (this.remoteCharacters.has(id) && this.speakingCharacters.has(id)) {

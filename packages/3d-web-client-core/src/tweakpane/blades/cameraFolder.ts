@@ -4,14 +4,14 @@ import { BladeApi, FolderApi, TpChangeEvent } from "tweakpane";
 import { CameraManager } from "../../camera/CameraManager";
 
 export const camValues = {
-  initialDistance: 3.3,
-  minDistance: 0.1,
-  maxDistance: 5,
+  initialDistance: 8,
+  minDistance: 4,
+  maxDistance: 15,
   initialFOV: 60,
   maxFOV: 70,
   minFOV: 60,
   invertFOVMapping: false,
-  damping: 0.25,
+  damping: 0.1,
   zoomScale: 0.088,
   zoomDamping: 0.4,
 };
