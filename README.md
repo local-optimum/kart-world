@@ -1,3 +1,22 @@
+# Kart World - Enhanced 3D Web Experience
+
+> **🚗 This is a specialized fork focused on kart racing gameplay improvements**
+>
+> This repository is based on the excellent [MML 3D Web Experience](https://github.com/mml-io/3d-web-experience) project by MML.io. 
+> 
+> **✨ Enhanced Features Added:**
+> - Advanced kart physics with realistic drift mechanics
+> - Improved camera system with dynamic tracking
+> - Steering and movement polish for racing gameplay
+> - Smoke trails and visual effects
+> - Optimized controls for high-speed racing
+>
+> **👉 For the original project and latest updates, visit:** https://github.com/mml-io/3d-web-experience
+>
+> **🙏 Full credit to the MML.io team** for creating this amazing foundation for 3D web experiences.
+
+---
+
 # (MML) 3D Web Experience
 
 This repository contains packages used to run a web-based, multi-user 3D web experience that
