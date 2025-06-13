@@ -1,4 +1,4 @@
-import { Color, Group, Vector3 } from "three";
+import { Color, Group, Vector3, Quaternion } from "three";
 
 import { CameraManager } from "../camera/CameraManager";
 import { Composer } from "../rendering/composer";
@@ -8,6 +8,7 @@ import { CharacterModelLoader } from "./CharacterModelLoader";
 import { CharacterSpeakingIndicator } from "./CharacterSpeakingIndicator";
 import { AnimationState } from "./CharacterState";
 import { CharacterTooltip } from "./CharacterTooltip";
+import { KartMesh, KartMeshConfig } from "./KartMesh";
 
 export type AnimationConfig = {
   idleAnimationFileUrl: string;
@@ -44,6 +45,8 @@ export type CharacterConfig = {
   cameraManager: CameraManager;
   composer: Composer;
   isLocal: boolean;
+  kartMode?: boolean;
+  kartConfig?: KartMeshConfig;
 };
 
 function characterHeightToTooltipHeightOffset(characterHeight: number): number {
@@ -60,6 +63,10 @@ function characterDescriptionMatches(a: CharacterDescription, b: CharacterDescri
 
 export class Character extends Group {
   private model: CharacterModel | null = null;
+  private kartMesh: KartMesh | null = null;
+  private lastSpeed: number = 0;
+  private lastSteeringAngle: number = 0;
+  
   public color: Color = new Color();
   public tooltip: CharacterTooltip;
   public speakingIndicator: CharacterSpeakingIndicator | null = null;
@@ -99,19 +106,61 @@ export class Character extends Group {
   }
 
   private setTooltipHeights() {
-    if (this.model && this.model.characterHeight) {
-      let height = characterHeightToTooltipHeightOffset(this.model.characterHeight);
-      this.tooltip.setHeightOffset(height);
-      height += this.tooltip.scale.y;
+    let height: number;
+    
+    if (this.config.kartMode) {
+      // For karts, set tooltip height above the kart body
+      height = 1.5; // Fixed height above kart
+    } else if (this.model && this.model.characterHeight) {
+      height = characterHeightToTooltipHeightOffset(this.model.characterHeight);
+    } else {
+      height = 1.5; // Default height
+    }
+    
+    this.tooltip.setHeightOffset(height);
+    height += this.tooltip.scale.y;
 
-      for (const chatTooltip of this.chatTooltips) {
-        chatTooltip.setHeightOffset(height);
-        height += chatTooltip.scale.y;
-      }
+    for (const chatTooltip of this.chatTooltips) {
+      chatTooltip.setHeightOffset(height);
+      height += chatTooltip.scale.y;
     }
   }
 
   private async load(): Promise<void> {
+    if (this.config.kartMode) {
+      // Load kart mesh instead of character model
+      await this.loadKart();
+    } else {
+      // Load traditional character model
+      await this.loadCharacterModel();
+    }
+  }
+
+  private async loadKart(): Promise<void> {
+    // Remove previous kart if it exists
+    if (this.kartMesh) {
+      this.remove(this.kartMesh);
+      this.kartMesh.dispose();
+    }
+
+    // Create new kart mesh
+    const kartConfig: KartMeshConfig = {
+      kartColor: this.generateKartColor(),
+      wheelColor: 0x333333,
+      showWheels: true,
+      ...this.config.kartConfig,
+    };
+
+    this.kartMesh = new KartMesh(kartConfig);
+    this.add(this.kartMesh);
+
+    // Initialize speaking indicator
+    if (this.speakingIndicator === null) {
+      this.speakingIndicator = new CharacterSpeakingIndicator(this.config.composer.postPostScene);
+    }
+  }
+
+  private async loadCharacterModel(): Promise<void> {
     const previousModel = this.model;
     if (previousModel && previousModel.mesh) {
       this.remove(previousModel.mesh);
@@ -133,28 +182,77 @@ export class Character extends Group {
     }
   }
 
+  private generateKartColor(): number {
+    // Generate a color based on character ID for uniqueness
+    const colors = [
+      0x4287f5, // Blue
+      0xff6b6b, // Red
+      0x4ecdc4, // Teal
+      0x45b7d1, // Light blue
+      0xf9ca24, // Yellow
+      0xf0932b, // Orange
+      0xeb4d4b, // Red
+      0x6c5ce7, // Purple
+      0x00b894, // Green
+      0xe17055, // Pink
+    ];
+    return colors[this.config.characterId % colors.length];
+  }
+
   public updateAnimation(targetAnimation: AnimationState) {
+    if (this.config.kartMode) {
+      // Karts don't have traditional animations, but we can use states for other things
+      // For now, we'll ignore animation updates in kart mode
+      return;
+    }
     this.model?.updateAnimation(targetAnimation);
   }
 
+  public updateKartMovement(speed: number, steeringAngle: number, deltaTime: number) {
+    if (this.kartMesh && this.config.kartMode) {
+      this.kartMesh.updateWheelRotation(speed, steeringAngle, deltaTime);
+      this.lastSpeed = speed;
+      this.lastSteeringAngle = steeringAngle;
+    }
+  }
+
   public update(time: number, deltaTime: number) {
-    if (!this.model) return;
     if (this.tooltip) {
       this.tooltip.update();
     }
+
     if (this.speakingIndicator) {
       this.speakingIndicator.setTime(time);
-      if (this.model.mesh && this.model.headBone) {
-        this.speakingIndicator.setBillboarding(
-          this.model.headBone?.getWorldPosition(new Vector3()),
-          this.config.cameraManager.camera,
-        );
+      
+      // Position speaking indicator above character/kart
+      let indicatorPosition: Vector3;
+      if (this.config.kartMode && this.kartMesh) {
+        // Position above kart center
+        indicatorPosition = this.kartMesh.getWorldPosition(new Vector3());
+        indicatorPosition.y += 1.2; // Above kart body
+      } else if (this.model?.mesh && this.model.headBone) {
+        indicatorPosition = this.model.headBone.getWorldPosition(new Vector3());
+      } else {
+        indicatorPosition = this.getWorldPosition(new Vector3());
+        indicatorPosition.y += 1.5; // Default height
       }
+      
+      this.speakingIndicator.setBillboarding(indicatorPosition, this.config.cameraManager.camera);
     }
-    this.model.update(deltaTime);
+
+    // Update model or kart
+    if (this.config.kartMode) {
+      // Kart-specific updates are handled by KartController
+      // Visual updates like wheel rotation are handled in updateKartMovement
+    } else if (this.model) {
+      this.model.update(deltaTime);
+    }
   }
 
   getCurrentAnimation(): AnimationState {
+    if (this.config.kartMode) {
+      return AnimationState.idle; // Karts are always "idle" in terms of animation
+    }
     return this.model?.currentAnimation || AnimationState.idle;
   }
 
@@ -176,5 +274,11 @@ export class Character extends Group {
       this.tooltip.show();
     }
     this.setTooltipHeights();
+  }
+
+  // Helper method to get world direction for kart movement
+  getWorldDirection(target: Vector3): Vector3 {
+    const quaternion = this.getWorldQuaternion(new Quaternion());
+    return target.set(0, 0, 1).applyQuaternion(quaternion);
   }
 }
