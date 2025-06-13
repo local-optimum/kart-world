@@ -43,12 +43,12 @@ export class KartController {
 
   private kartConfig: KartPhysicsConfig = {
     maxSpeed: 25,
-    acceleration: 7,
-    deceleration: 6,
+    acceleration: 5,
+    deceleration: 12,
     steeringSpeed: 2.5,
     driftFactor: 0.7,
-    groundFriction: 0.98,
-    airResistance: 0.02,
+    groundFriction: 0.95,
+    airResistance: 0.03,
     bounceRestitution: 0.6,
   };
 
@@ -94,11 +94,14 @@ export class KartController {
 
     if (controlInput) {
       this.processInput(controlInput);
-      this.updateKartPhysics(this.config.timeManager.deltaTime);
     } else {
-      this.applyPassiveDeceleration(this.config.timeManager.deltaTime);
+      // No input - coast with inertia (gradually reduce inputs to 0)
+      this.applyInputDecay(this.config.timeManager.deltaTime);
     }
 
+    // Always update physics and position for proper inertia
+    this.updateKartPhysics(this.config.timeManager.deltaTime);
+    
     this.maintainGroundContact();
     this.checkRespawnBounds();
     this.updateNetworkState();
@@ -213,15 +216,27 @@ export class KartController {
   }
 
   private applyResistance(deltaTime: number): void {
-    const airResistance = this.velocity.length() * this.kartConfig.airResistance;
-    const resistanceVector = this.velocity
+    const speed = this.velocity.length();
+    
+    // Air resistance is always applied
+    const airResistance = speed * this.kartConfig.airResistance;
+    const airResistanceVector = this.velocity
       .clone()
       .normalize()
       .multiplyScalar(-airResistance * deltaTime);
-    this.velocity.add(resistanceVector);
+    this.velocity.add(airResistanceVector);
 
-    if (!this.isDrifting && this.isGrounded) {
-      this.velocity.multiplyScalar(this.kartConfig.groundFriction);
+    // Ground friction - different behavior when coasting vs driving
+    if (this.isGrounded) {
+      if (Math.abs(this.throttleInput) < 0.01) {
+        // Coasting - stronger ground friction for natural slowdown
+        const coastingFriction = 0.92; // More friction when coasting
+        this.velocity.multiplyScalar(coastingFriction);
+      } else if (!this.isDrifting) {
+        // Driving normally - normal ground friction
+        this.velocity.multiplyScalar(this.kartConfig.groundFriction);
+      }
+      // When drifting, apply less friction (handled in processDrift)
     }
   }
 
@@ -245,19 +260,13 @@ export class KartController {
     }
   }
 
-  private applyPassiveDeceleration(deltaTime: number): void {
-    const passiveDeceleration = 3;
-    const decelerationAmount = passiveDeceleration * deltaTime;
-
-    if (this.velocity.length() > decelerationAmount) {
-      const decelerationVector = this.velocity
-        .clone()
-        .normalize()
-        .multiplyScalar(-decelerationAmount);
-      this.velocity.add(decelerationVector);
-    } else {
-      this.velocity.set(0, 0, 0);
-    }
+  private applyInputDecay(deltaTime: number): void {
+    // Gradually reduce throttle and steering inputs for coasting effect
+    const inputDecayRate = 6; // How fast inputs decay when no keys pressed
+    
+    this.throttleInput = this.smoothInput(this.throttleInput, 0, inputDecayRate * deltaTime);
+    this.steeringInput = this.smoothInput(this.steeringInput, 0, inputDecayRate * deltaTime);
+    this.isDrifting = false; // Stop drifting when no input
   }
 
   private updateCharacterTransform(deltaTime: number): void {
