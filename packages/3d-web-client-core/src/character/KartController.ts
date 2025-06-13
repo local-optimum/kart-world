@@ -200,8 +200,9 @@ export class KartController {
       const effectiveSteering = this.steeringInput * speedFactor;
 
       this.angularVelocity = effectiveSteering * this.kartConfig.steeringSpeed;
-      // Invert rotation: right input (positive) should turn right (negative Y rotation)
-      this.config.character.rotation.y -= this.angularVelocity * deltaTime;
+      // D (right) = positive steering = positive Y rotation = right turn
+      // A (left) = negative steering = negative Y rotation = left turn
+      this.config.character.rotation.y += this.angularVelocity * deltaTime;
     }
   }
 
