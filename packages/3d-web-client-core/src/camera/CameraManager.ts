@@ -237,7 +237,7 @@ export class CameraManager {
 
     // Calculate speed-responsive camera distance (pull back when accelerating)
     const speed = kartVelocity.length();
-    const maxKartSpeed = 20; // Match KartController maxSpeed
+    const maxKartSpeed = 25; // Updated to match KartController maxSpeed
     const speedRatio = Math.min(speed / maxKartSpeed, 1);
 
     // Dynamic distance: closer when stationary, further back at high speed
