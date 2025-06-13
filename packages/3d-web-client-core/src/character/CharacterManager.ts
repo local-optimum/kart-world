@@ -12,7 +12,7 @@ import { TweakPane } from "../tweakpane/TweakPane";
 import { AnimationConfig, Character, CharacterDescription } from "./Character";
 import { CharacterModelLoader } from "./CharacterModelLoader";
 import { AnimationState, CharacterState } from "./CharacterState";
-import { LocalController } from "./LocalController";
+import { KartController } from "./KartController";
 import { RemoteController } from "./RemoteController";
 import { encodeCharacterAndCamera } from "./url-position";
 
@@ -81,7 +81,7 @@ export class CharacterManager {
   public remoteCharacterControllers: Map<number, RemoteController> = new Map();
 
   private localCharacterSpawned: boolean = false;
-  public localController: LocalController;
+  public localController: KartController;
   public localCharacter: Character | null = null;
 
   private speakingCharacters: Map<number, boolean> = new Map();
@@ -126,7 +126,7 @@ export class CharacterManager {
     });
     this.localClientId = id;
     this.localCharacter = character;
-    this.localController = new LocalController({
+    this.localController = new KartController({
       character: this.localCharacter,
       id: this.localClientId,
       collisionsManager: this.config.collisionsManager,
@@ -170,7 +170,8 @@ export class CharacterManager {
   }
 
   public setupTweakPane(tweakPane: TweakPane) {
-    tweakPane.setupCharacterController(this.localController);
+    // TODO: Update TweakPane to work with KartController
+    // tweakPane.setupCharacterController(this.localController);
   }
 
   public spawnRemoteCharacter(
