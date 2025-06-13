@@ -42,13 +42,13 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 30,
-    acceleration: 15,
-    deceleration: 20,
-    steeringSpeed: 1.5,
-    driftFactor: 0.7,
-    groundFriction: 0.95,
-    airResistance: 0.025,
+    maxSpeed: 35,
+    acceleration: 12,
+    deceleration: 15,
+    steeringSpeed: 2.5,
+    driftFactor: 0.4,
+    groundFriction: 0.88,
+    airResistance: 0.015,
     bounceRestitution: 0.6,
   };
 
@@ -58,6 +58,7 @@ export class KartController {
   private isGrounded: boolean = true;
   private throttleInput: number = 0;
   private steeringInput: number = 0;
+  private isSkidding: boolean = false;
 
   private rayCaster: Raycaster = new Raycaster();
   private kartBounds = {
@@ -123,13 +124,18 @@ export class KartController {
       const drift = this.config.keyInputManager.isKeyPressed(" ");
 
       const throttle = (forward ? 1 : 0) + (backward ? -1 : 0);
-      const steering = (left ? 1 : 0) + (right ? -1 : 0);
+      // STEERING MAPPING - DO NOT CHANGE THIS AGAIN!
+      // A key (left) should produce NEGATIVE steering for LEFT turn
+      // D key (right) should produce POSITIVE steering for RIGHT turn
+      // This matches the coordinate system: negative Y rotation = left, positive Y rotation = right
+      const steering = (right ? 1 : 0) + (left ? -1 : 0);
+      const driftInput = drift;
 
-      if (throttle === 0 && steering === 0 && !drift) {
+      if (throttle === 0 && steering === 0 && !driftInput) {
         return null;
       }
 
-      return { throttle, steering, drift };
+      return { throttle, steering, drift: driftInput };
     }
 
     return rawInput as KartControlInput;
@@ -171,6 +177,7 @@ export class KartController {
     this.applyResistance(deltaTime);
     this.processDrift(deltaTime);
     this.updateCharacterTransform(deltaTime);
+    this.updateSkiddingState();
 
     // Update visual kart animations (wheels, etc.)
     const currentSpeed = this.velocity.length();
@@ -199,17 +206,33 @@ export class KartController {
   private updateAngularVelocity(deltaTime: number): void {
     if (Math.abs(this.steeringInput) > 0.01) {
       const forwardSpeed = this.velocity.length();
-      // Improved speed factor for better turning feel
-      // More responsive at low speeds, more realistic at high speeds
-      const minSpeedFactor = 0.3; // Minimum turning ability at very low speeds
-      const speedForTurning = 8; // Speed at which turning reaches full effectiveness
-      const speedFactor = minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
-      const effectiveSteering = this.steeringInput * speedFactor;
+      
+      // Only allow steering if the kart is moving (realistic behavior)
+      if (forwardSpeed > 0.5) { // Minimum speed required to turn
+        // Much more responsive steering for donut-making fun!
+        // High responsiveness at low speeds, still good at high speeds
+        const minSpeedFactor = 0.8; // Much higher minimum turning (was 0.3)
+        const speedForTurning = 12; // Higher speed threshold for full effectiveness
+        const speedFactor = minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
+        const effectiveSteering = this.steeringInput * speedFactor;
 
-      this.angularVelocity = effectiveSteering * this.kartConfig.steeringSpeed;
-      // D (right) = positive steering = positive Y rotation = right turn
-      // A (left) = negative steering = negative Y rotation = left turn
-      this.config.character.rotation.y += this.angularVelocity * deltaTime;
+        // Add to angular velocity instead of setting it directly (for inertia)
+        const angularAcceleration = effectiveSteering * this.kartConfig.steeringSpeed * 3; // Multiplier for responsiveness
+        this.angularVelocity += angularAcceleration * deltaTime;
+        
+        // Limit maximum angular velocity
+        const maxAngularVelocity = 4; // Radians per second
+        this.angularVelocity = Math.max(-maxAngularVelocity, Math.min(maxAngularVelocity, this.angularVelocity));
+      }
+    }
+    
+    // Apply angular velocity to rotation (with inertia)
+    this.config.character.rotation.y += this.angularVelocity * deltaTime;
+    
+    // Apply angular friction/damping when not steering or when stationary
+    if (Math.abs(this.steeringInput) < 0.01 || this.velocity.length() < 0.5) {
+      const angularFriction = 0.92; // How quickly rotation slows down
+      this.angularVelocity *= angularFriction;
     }
   }
 
@@ -227,14 +250,14 @@ export class KartController {
     // Ground friction - different behavior when coasting vs driving
     if (this.isGrounded) {
       if (Math.abs(this.throttleInput) < 0.01) {
-        // Coasting - stronger ground friction for natural slowdown
-        const coastingFriction = 0.97; // Reduced from 0.92 for longer coasting
+        // Coasting - much less friction for more sliding/floating
+        const coastingFriction = 0.99; // Much more coasting (was 0.97)
         this.velocity.multiplyScalar(coastingFriction);
       } else if (!this.isDrifting) {
-        // Driving normally - normal ground friction
+        // Driving normally - reduced grip
         this.velocity.multiplyScalar(this.kartConfig.groundFriction);
       }
-      // When drifting, apply less friction (handled in processDrift)
+      // When drifting, apply even less friction for more sliding
     }
   }
 
@@ -251,7 +274,8 @@ export class KartController {
       const speed = this.velocity.length();
 
       if (speed > 0.1) {
-        const alignmentRate = 5 * deltaTime;
+        // Much slower alignment for more floaty feel
+        const alignmentRate = 2 * deltaTime; // Reduced from 5 for more sliding
         const targetVelocity = forward.multiplyScalar(speed);
         this.velocity.lerp(targetVelocity, alignmentRate);
       }
@@ -259,8 +283,8 @@ export class KartController {
   }
 
   private applyInputDecay(deltaTime: number): void {
-    // Gradually reduce throttle and steering inputs for coasting effect
-    const inputDecayRate = 6; // How fast inputs decay when no keys pressed
+    // Much slower input decay for more momentum and sliding
+    const inputDecayRate = 3; // Reduced from 6 for more momentum
     
     this.throttleInput = this.smoothInput(this.throttleInput, 0, inputDecayRate * deltaTime);
     this.steeringInput = this.smoothInput(this.steeringInput, 0, inputDecayRate * deltaTime);
@@ -366,5 +390,57 @@ export class KartController {
 
   public getVelocity(): Vector3 {
     return this.velocity.clone();
+  }
+
+  public isCreatingSkidMarks(): boolean {
+    return this.isSkidding;
+  }
+
+  public getWheelPositions(): Vector3[] {
+    const kartPosition = this.config.character.position;
+    const kartRotation = this.config.character.rotation;
+    
+    // Calculate wheel positions relative to kart center
+    const wheelOffset = {
+      rear: -1.0, // Distance from center to rear wheels (behind the kart)
+      side: 0.6,  // Distance from center to side wheels
+    };
+
+    const positions: Vector3[] = [];
+    
+    // Create rear wheel positions in local space
+    const rearLeft = new Vector3(-wheelOffset.side, 0, wheelOffset.rear);
+    const rearRight = new Vector3(wheelOffset.side, 0, wheelOffset.rear);
+    
+    // Transform to world space using kart's transform
+    const kartMatrix = this.config.character.matrixWorld;
+    rearLeft.applyMatrix4(kartMatrix);
+    rearRight.applyMatrix4(kartMatrix);
+    
+    // Use ground detection to place skid marks on ground surface
+    [rearLeft, rearRight].forEach(wheelPos => {
+      this.rayCaster.set(wheelPos, new Vector3(0, -1, 0));
+      const groundHit = this.config.collisionsManager.raycastFirst(this.rayCaster.ray);
+      
+      if (groundHit) {
+        const [distance] = groundHit;
+        // Place skid mark slightly above the detected ground
+        wheelPos.y = wheelPos.y - distance + 0.02;
+      } else {
+        // Fallback: place slightly above current wheel position
+        wheelPos.y += 0.02;
+      }
+    });
+    
+    positions.push(rearLeft, rearRight);
+    return positions;
+  }
+
+  private updateSkiddingState(): void {
+    const speed = this.velocity.length();
+    const hardBraking = this.throttleInput < -0.2 && speed > 1; // Easier to trigger
+    const heavyDrifting = this.isDrifting && speed > 2; // Easier to trigger
+    
+    this.isSkidding = this.isGrounded && (hardBraking || heavyDrifting);
   }
 } 

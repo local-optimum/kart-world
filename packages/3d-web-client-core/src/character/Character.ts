@@ -9,6 +9,7 @@ import { CharacterSpeakingIndicator } from "./CharacterSpeakingIndicator";
 import { AnimationState } from "./CharacterState";
 import { CharacterTooltip } from "./CharacterTooltip";
 import { KartMesh, KartMeshConfig } from "./KartMesh";
+import { SkidMarkTrail } from "./SkidMarkTrail";
 
 export type AnimationConfig = {
   idleAnimationFileUrl: string;
@@ -66,6 +67,11 @@ export class Character extends Group {
   private kartMesh: KartMesh | null = null;
   private lastSpeed: number = 0;
   private lastSteeringAngle: number = 0;
+  private skidMarkTrails: SkidMarkTrail[] = []; // Array for multiple wheel trails
+  private wasSkidding: boolean = false;
+  private maxSkidTrails: number = 50; // Doubled from 12 for better visual coverage
+  private lastSkidMarkTime: number = 0; // Track when we last created new skid marks
+  private skidMarkInterval: number = 0.2; // Create new skid marks every 0.2 seconds while skidding
   
   public color: Color = new Color();
   public tooltip: CharacterTooltip;
@@ -214,6 +220,97 @@ export class Character extends Group {
       this.lastSpeed = speed;
       this.lastSteeringAngle = steeringAngle;
     }
+  }
+
+  public updateSkidMarks(isSkidding: boolean, wheelPositions: Vector3[]) {
+    if (!this.config.kartMode) return;
+
+    // Always update trails for fading
+    this.updateSkidMarkTrails();
+
+    const currentTime = Date.now() / 1000;
+
+    if (isSkidding) {
+      // Always create new skid marks at regular intervals while skidding
+      if (!this.wasSkidding || (currentTime - this.lastSkidMarkTime) >= this.skidMarkInterval) {
+        // Remove oldest trails to make room for new ones
+        this.cleanupOldestTrails(wheelPositions.length);
+        
+        // Always create new trails
+        this.createNewSkidMarks(wheelPositions);
+        this.lastSkidMarkTime = currentTime;
+      }
+      
+      // Continue adding points to existing trails
+      this.continueSkidMarks(wheelPositions);
+    } else if (!isSkidding && this.wasSkidding) {
+      // Stop skid marks when no longer skidding
+      this.stopSkidMarks();
+    }
+
+    this.wasSkidding = isSkidding;
+  }
+
+  private cleanupOldestTrails(newTrailCount: number) {
+    // Remove oldest trails to make room for new ones
+    while (this.skidMarkTrails.length + newTrailCount > this.maxSkidTrails) {
+      const oldestTrail = this.skidMarkTrails.shift()!;
+      oldestTrail.stopTrail();
+      this.config.composer.postPostScene.remove(oldestTrail);
+      oldestTrail.dispose();
+    }
+  }
+
+  private createNewSkidMarks(wheelPositions: Vector3[]) {
+    // Always create new trails for each wheel position
+    wheelPositions.forEach((position, index) => {
+      const trail = new SkidMarkTrail({
+        color: new Color(0x000000), // Pure black
+        maxPoints: 50, // Shorter trails for faster turnover
+        fadeTime: 5, // Fast fade
+      });
+      
+      trail.startTrail(position);
+      this.skidMarkTrails.push(trail);
+      this.config.composer.postPostScene.add(trail);
+    });
+  }
+
+  private startSkidMarks(wheelPositions: Vector3[]) {
+    // This method is now just an alias for createNewSkidMarks
+    this.createNewSkidMarks(wheelPositions);
+  }
+
+  private continueSkidMarks(wheelPositions: Vector3[]) {
+    // Add points to existing trails
+    wheelPositions.forEach((position, index) => {
+      if (index < this.skidMarkTrails.length) {
+        this.skidMarkTrails[index].addPoint(position);
+      }
+    });
+  }
+
+  private stopSkidMarks() {
+    // Stop all active trails
+    this.skidMarkTrails.forEach(trail => {
+      trail.stopTrail();
+    });
+  }
+
+  private updateSkidMarkTrails() {
+    // Update all trails and remove empty ones
+    this.skidMarkTrails = this.skidMarkTrails.filter(trail => {
+      trail.update();
+      
+      if (trail.isEmpty()) {
+        // Remove from scene instead of character
+        this.config.composer.postPostScene.remove(trail);
+        trail.dispose();
+        return false;
+      }
+      
+      return true;
+    });
   }
 
   public update(time: number, deltaTime: number) {

@@ -284,6 +284,11 @@ export class CharacterManager {
       const kartRotation = this.localCharacter.rotation;
       this.config.cameraManager.updateForKart(kartPosition, kartVelocity, kartRotation);
 
+      // Update skid marks based on kart state
+      const isSkidding = this.localController.isCreatingSkidMarks();
+      const wheelPositions = this.localController.getWheelPositions();
+      this.localCharacter.updateSkidMarks(isSkidding, wheelPositions);
+
       for (const [id, update] of this.config.remoteUserStates) {
         if (this.remoteCharacters.has(id) && this.speakingCharacters.has(id)) {
           const character = this.remoteCharacters.get(id);
