@@ -287,7 +287,8 @@ export class CharacterManager {
       // Update skid marks based on kart state
       const isSkidding = this.localController.isCreatingSkidMarks();
       const wheelPositions = this.localController.getWheelPositions();
-      this.localCharacter.updateSkidMarks(isSkidding, wheelPositions);
+      const velocity = this.localController.getVelocity(); // Get velocity for speed-based trail intensity
+      this.localCharacter.updateSkidMarks(isSkidding, wheelPositions, velocity);
 
       for (const [id, update] of this.config.remoteUserStates) {
         if (this.remoteCharacters.has(id) && this.speakingCharacters.has(id)) {
