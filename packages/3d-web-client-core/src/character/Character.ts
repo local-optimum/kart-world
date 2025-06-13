@@ -149,11 +149,13 @@ export class Character extends Group {
       this.kartMesh.dispose();
     }
 
-    // Create new kart mesh
+    // Create new kart mesh - using GLB asset
     const kartConfig: KartMeshConfig = {
       kartColor: this.generateKartColor(),
       wheelColor: 0x333333,
-      showWheels: true,
+      showWheels: false, // Don't create programmatic wheels since we're using GLB
+      modelUrl: "/assets/models/go_kart.glb",
+      characterModelLoader: this.config.characterModelLoader,
       ...this.config.kartConfig,
     };
 
@@ -225,26 +227,25 @@ export class Character extends Group {
   public updateSkidMarks(isSkidding: boolean, wheelPositions: Vector3[]) {
     if (!this.config.kartMode) return;
 
-    // Always update trails for fading
+    // Only update trails for fading when needed
     this.updateSkidMarkTrails();
 
     const currentTime = Date.now() / 1000;
 
     if (isSkidding) {
-      // Always create new skid marks at regular intervals while skidding
-      if (!this.wasSkidding || currentTime - this.lastSkidMarkTime >= this.skidMarkInterval) {
-        // Remove oldest trails to make room for new ones
+      // ONLY create new skid marks during ACTION MOMENTS
+      if (!this.wasSkidding) {
+        // Start new skid marks when we begin skidding
         this.cleanupOldestTrails(wheelPositions.length);
-
-        // Always create new trails
         this.createNewSkidMarks(wheelPositions);
         this.lastSkidMarkTime = currentTime;
+      } else if (currentTime - this.lastSkidMarkTime >= this.skidMarkInterval) {
+        // Extend existing trails while still skidding
+        this.continueSkidMarks(wheelPositions);
+        this.lastSkidMarkTime = currentTime;
       }
-
-      // Continue adding points to existing trails
-      this.continueSkidMarks(wheelPositions);
     } else if (!isSkidding && this.wasSkidding) {
-      // Stop skid marks when no longer skidding
+      // Stop skid marks when action moment ends
       this.stopSkidMarks();
     }
 

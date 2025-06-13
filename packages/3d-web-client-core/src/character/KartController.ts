@@ -42,13 +42,13 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 300, // Doubled from 500 for higher top speed
-    acceleration: 75,
+    maxSpeed: 200, // Reduced for smaller environments - still fast but manageable
+    acceleration: 70,
     deceleration: 70,
-    steeringSpeed: 2.5,
+    steeringSpeed: 1.8, // Reduced from 2.5 for slower, more controlled turning
     driftFactor: 0.4,
-    groundFriction: 0.88,
-    airResistance: 0.015,
+    groundFriction: 0.95, // Reduced friction for better speed maintenance
+    airResistance: 0.008, // Reduced air resistance for higher top speeds
     bounceRestitution: 0.6,
   };
 
@@ -62,8 +62,8 @@ export class KartController {
 
   private rayCaster: Raycaster = new Raycaster();
   private kartBounds = {
-    width: 1.2,
-    height: 0.8,
+    width: 1.4,
+    height: 0.5, // Adjusted for new wheel positioning - bottom of wheels at ground level
     length: 1.8,
   };
 
@@ -154,12 +154,12 @@ export class KartController {
       steeringSmoothRate * this.config.timeManager.deltaTime,
     );
 
-    // Automatic drift when turning hard at speed
+    // Automatic drift when turning hard at speed - improved for high speeds
     const speed = this.velocity.length();
-    const isHardTurning = Math.abs(this.steeringInput) > 0.4; // Easier to trigger drift
-    const isMovingFast = speed > 8; // Lower speed threshold
+    const isHardTurning = Math.abs(this.steeringInput) > 0.3; // Easier to trigger drift
+    const isMovingFast = speed > 15; // Higher speed threshold for better high-speed drifting
     // Enter drift state when turning hard at speed
-    this.isDrifting = isHardTurning && isMovingFast && Math.abs(this.throttleInput) > 0.2;
+    this.isDrifting = isHardTurning && isMovingFast && Math.abs(this.throttleInput) > 0.1;
   }
 
   private smoothInput(current: number, target: number, rate: number): number {
@@ -188,19 +188,47 @@ export class KartController {
 
   private updateLinearVelocity(deltaTime: number): void {
     if (Math.abs(this.throttleInput) > 0.01) {
-      const accelerationForce =
-        this.throttleInput *
-        (this.throttleInput > 0 ? this.kartConfig.acceleration : this.kartConfig.deceleration);
+      if (this.throttleInput > 0) {
+        // FORWARD ACCELERATION - normal acceleration in forward direction
+        const accelerationForce = this.throttleInput * this.kartConfig.acceleration;
+        const forwardDirection = this.config.character.getWorldDirection(new Vector3());
+        this.velocity.add(forwardDirection.multiplyScalar(accelerationForce * deltaTime));
 
-      const forwardDirection = this.config.character.getWorldDirection(new Vector3());
-      this.velocity.add(forwardDirection.multiplyScalar(accelerationForce * deltaTime));
-
-      const currentSpeed = this.velocity.length();
-      const maxSpeed =
-        this.throttleInput >= 0 ? this.kartConfig.maxSpeed : this.kartConfig.maxSpeed * 0.4;
-
-      if (currentSpeed > maxSpeed) {
-        this.velocity.normalize().multiplyScalar(maxSpeed);
+        const currentSpeed = this.velocity.length();
+        if (currentSpeed > this.kartConfig.maxSpeed) {
+          this.velocity.normalize().multiplyScalar(this.kartConfig.maxSpeed);
+        }
+      } else {
+        // SIMPLE BRAKING - speed reduction plus tiny directional friction to stop lateral slides
+        const brakingIntensity = Math.abs(this.throttleInput);
+        const currentSpeed = this.velocity.length();
+        
+        if (currentSpeed > 0.1) {
+          // SPEED-DEPENDENT BRAKING: smoother transition, less abrupt at low speeds
+          let speedFactor;
+          if (currentSpeed < 15) {
+            speedFactor = 1.3; // Gentler 1.3x braking effectiveness at very low speeds
+          } else if (currentSpeed < 40) {
+            speedFactor = 1.1; // Slight boost at low-medium speeds
+          } else {
+            speedFactor = Math.max(0.3, 1 - currentSpeed / 100); // Normal curve for higher speeds
+          }
+          const adjustedBrakingIntensity = brakingIntensity * speedFactor;
+          
+          const speedReduction = 1 - adjustedBrakingIntensity * 0.9 * deltaTime; // 50% stronger than 3x
+          const directionFriction = 1 - adjustedBrakingIntensity * 0.675 * deltaTime; // 50% stronger than 3x
+          
+          // Apply both effects to the entire velocity vector
+          this.velocity.multiplyScalar(speedReduction * directionFriction);
+          
+          // Stop completely at very low speeds
+          if (this.velocity.length() < 0.5) {
+            this.velocity.multiplyScalar(0.9);
+            if (this.velocity.length() < 0.1) {
+              this.velocity.set(0, 0, 0);
+            }
+          }
+        }
       }
     }
   }
@@ -209,25 +237,33 @@ export class KartController {
     if (Math.abs(this.steeringInput) > 0.01) {
       const forwardSpeed = this.velocity.length();
 
-      // Only allow steering if the kart is moving (realistic behavior)
+      // REALISTIC STEERING: Need minimum speed to turn, reduced effectiveness at very low speeds
       if (forwardSpeed > 0.5) {
-        // Minimum speed required to turn
-        // Much more responsive steering for donut-making fun!
-        // High responsiveness at low speeds, still good at high speeds
-        const minSpeedFactor = 0.8; // Much higher minimum turning (was 0.3)
-        const speedForTurning = 12; // Higher speed threshold for full effectiveness
-        const speedFactor =
-          minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
-        console.log("speedFactor", speedFactor, forwardSpeed, speedForTurning);
+        // Calculate steering effectiveness based on speed
+        let steeringEffectiveness;
+        if (forwardSpeed < 3) {
+          // Very low speeds: severely reduced steering (realistic - hard to turn when barely moving)
+          steeringEffectiveness = 0.2;
+        } else if (forwardSpeed < 8) {
+          // Low speeds: reduced steering effectiveness
+          steeringEffectiveness = 0.5;
+        } else {
+          // Normal speed-dependent steering for higher speeds
+          const lowSpeedFactor = 1.0; // Full turning at moderate speeds
+          const highSpeedReduction = 0.3; // Much less turning at high speeds
+          const speedForMaxReduction = 30; // Speed at which turning is most reduced
+
+          const speedRatio = Math.min(forwardSpeed / speedForMaxReduction, 1);
+          steeringEffectiveness = lowSpeedFactor - speedRatio * (lowSpeedFactor - highSpeedReduction);
+        }
 
         // Apply steering relative to current facing direction
-        // Positive steering = left turn, Negative steering = right turn
-        // This works regardless of spawn orientation
-        const steeringForce = this.steeringInput * speedFactor * this.kartConfig.steeringSpeed * 3;
+        const steeringForce = this.steeringInput * steeringEffectiveness * this.kartConfig.steeringSpeed * 2;
         this.angularVelocity += steeringForce * deltaTime;
 
-        // Limit maximum angular velocity
-        const maxAngularVelocity = 4; // Radians per second
+        // Limit maximum angular velocity based on steering effectiveness
+        const baseMaxAngularVelocity = 4;
+        const maxAngularVelocity = baseMaxAngularVelocity * steeringEffectiveness;
         this.angularVelocity = Math.max(
           -maxAngularVelocity,
           Math.min(maxAngularVelocity, this.angularVelocity),
@@ -250,49 +286,54 @@ export class KartController {
   private applyResistance(deltaTime: number): void {
     const speed = this.velocity.length();
 
-    // Air resistance is always applied
-    const airResistance = speed * this.kartConfig.airResistance;
+    // Simple air resistance - reduced when braking for better slides
+    const isBraking = this.throttleInput < -0.1;
+    const airResistanceMultiplier = isBraking ? 0.3 : 1.0; // 70% less air resistance when braking
+    const airResistance = speed * this.kartConfig.airResistance * airResistanceMultiplier;
     const airResistanceVector = this.velocity
       .clone()
       .normalize()
       .multiplyScalar(-airResistance * deltaTime);
     this.velocity.add(airResistanceVector);
 
-    // Ground friction - different behavior when coasting vs driving
+    // Ground friction - only when driving forward (not coasting or braking)
     if (this.isGrounded) {
       if (Math.abs(this.throttleInput) < 0.01) {
-        // Coasting - much less friction for more sliding/floating
-        const coastingFriction = 0.99; // Much more coasting (was 0.97)
+        // Coasting - minimal friction for sliding
+        const coastingFriction = 0.995;
         this.velocity.multiplyScalar(coastingFriction);
-      } else if (!this.isDrifting) {
-        // Driving normally - reduced grip
+      } else if (this.throttleInput > 0 && !this.isDrifting) {
+        // Driving forward normally - apply grip
         this.velocity.multiplyScalar(this.kartConfig.groundFriction);
       }
-      // When drifting, friction is handled in processDrift() method for proper lateral sliding
+      // No additional friction when braking - let it slide naturally
     }
   }
 
   private processDrift(deltaTime: number): void {
     if (this.isDrifting) {
-      // PROPER DRIFT PHYSICS: Preserve momentum while reducing lateral grip
-      // The key is to maintain the original velocity direction while allowing some steering influence
+      // ENHANCED MOMENTUM PRESERVATION: Much stronger preservation of original direction
       const forward = this.config.character.getWorldDirection(new Vector3());
       const speed = this.velocity.length();
       if (speed > 0.1) {
         // Calculate how much the velocity direction differs from where the car is pointing
         const velocityDirection = this.velocity.clone().normalize();
-        // Instead of forcing alignment, let the car "slide" in its momentum direction
-        // while gradually allowing steering to influence the velocity
-        const steeringInfluence = 0.3; // How much steering can influence drift direction
+        
+        // STRONGER momentum preservation based on speed - faster = more preservation
+        const speedFactor = Math.min(speed / 40, 1); // Scale with speed up to 40 units
+        const baseSteeringInfluence = 0.15; // Reduced from 0.3 for more momentum preservation
+        const steeringInfluence = baseSteeringInfluence * (1 - speedFactor * 0.5); // Even less at high speeds
         const momentumPreservation = 1 - steeringInfluence;
+        
         // Preserve most of the original momentum direction
         const preservedVelocity = velocityDirection.multiplyScalar(speed * momentumPreservation);
         // Add small steering influence based on car's forward direction
         const steeringVelocity = forward.multiplyScalar(speed * steeringInfluence);
         // Combine preserved momentum with steering influence
         this.velocity.copy(preservedVelocity.add(steeringVelocity));
+        
         // Apply drift-specific friction (less than normal driving)
-        const driftFriction = 0.98; // Much less friction during drift
+        const driftFriction = 0.985; // Even less friction during drift for longer slides
         this.velocity.multiplyScalar(driftFriction);
       }
     } else {
@@ -301,10 +342,21 @@ export class KartController {
       const speed = this.velocity.length();
 
       if (speed > 0.1) {
-        // Much slower alignment for more floaty feel
-        const alignmentRate = 2 * deltaTime; // Reduced from 5 for more sliding
-        const targetVelocity = forward.multiplyScalar(speed);
-        this.velocity.lerp(targetVelocity, alignmentRate);
+        // PRESERVE MOMENTUM during braking - don't snap to new direction
+        const isBraking = this.throttleInput < -0.1;
+        
+        if (isBraking) {
+          // During braking: NO alignment to fully preserve sliding momentum
+          // Let the kart slide in whatever direction it's moving - pure momentum preservation
+          // Only the braking force itself will slow you down, not change direction
+        } else {
+          // Normal driving: gradually align velocity with car direction
+          const speedFactor = Math.min(speed / 40, 1); // Less alignment at higher speeds
+          const baseAlignmentRate = 1.5 * deltaTime; // Reduced base rate
+          const alignmentRate = baseAlignmentRate * (1 - speedFactor * 0.8); // Much more reduction at high speeds
+          const targetVelocity = forward.multiplyScalar(speed);
+          this.velocity.lerp(targetVelocity, alignmentRate);
+        }
       }
     }
   }
@@ -427,9 +479,10 @@ export class KartController {
     const kartRotation = this.config.character.rotation;
 
     // Calculate wheel positions relative to kart center
+    // Updated to match new KartMesh wheel positioning
     const wheelOffset = {
-      rear: -1.0, // Distance from center to rear wheels (behind the kart)
-      side: 0.6, // Distance from center to side wheels
+      rear: -0.8, // Distance from center to rear wheels (behind the kart)
+      side: 0.7, // Distance from center to side wheels
     };
 
     const positions: Vector3[] = [];
@@ -464,10 +517,32 @@ export class KartController {
 
   private updateSkiddingState(): void {
     const speed = this.velocity.length();
-    const hardBraking = this.throttleInput < -0.2 && speed > 1;
-    const hardTurning = Math.abs(this.steeringInput) > 0.4 && speed > 8; // Easier to trigger
-    const isDriftingFast = this.isDrifting && speed > 5;
+    
+    if (!this.isGrounded || speed < 3) {
+      this.isSkidding = false;
+      return;
+    }
 
-    this.isSkidding = this.isGrounded && (hardBraking || hardTurning || isDriftingFast);
+    // PROPER LATERAL SLIP DETECTION - the key to realistic skid marks!
+    const forward = this.config.character.getWorldDirection(new Vector3());
+    const velocityDirection = this.velocity.clone().normalize();
+    
+    // Calculate how much the velocity differs from the forward direction (lateral slip)
+    const forwardAlignment = forward.dot(velocityDirection);
+    const lateralSlipAmount = 1 - Math.abs(forwardAlignment); // 0 = no slip, 1 = full sideways
+    
+    // Calculate various skidding conditions
+    const hardBraking = this.throttleInput < -0.3 && speed > 5;
+    const isLateralSlipping = lateralSlipAmount > 0.3; // Significant sideways movement
+    const isDriftingFast = this.isDrifting && speed > 8;
+    const hardTurningAtSpeed = Math.abs(this.steeringInput) > 0.5 && speed > 12;
+    
+    // Skid marks trigger when there's actual lateral slip OR heavy braking
+    this.isSkidding = isLateralSlipping || hardBraking || isDriftingFast || hardTurningAtSpeed;
+    
+    // Skid marks will only trigger during these action moments:
+    // - Lateral slipping during drifts
+    // - Hard braking at speed  
+    // - High-speed sharp turning
   }
 }
