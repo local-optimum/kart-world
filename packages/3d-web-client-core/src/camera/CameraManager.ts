@@ -240,9 +240,11 @@ export class CameraManager {
     const maxKartSpeed = 20; // Match KartController maxSpeed
     const speedRatio = Math.min(speed / maxKartSpeed, 1);
 
-    // Dynamic distance: further back at high speed, closer when slow/stationary
-    // 15m at max speed, down to 4m when stationary (reversed from before)
-    const dynamicDistance = this.maxDistance - (this.maxDistance - this.minDistance) * speedRatio;
+    // Dynamic distance: closer when stationary, further back at high speed
+    // Start at ~6m when stationary, pull back to 15m at max speed
+    const baseDistance = 6; // Start closer (was using maxDistance=15m)
+    const maxDistance = 15;
+    const dynamicDistance = baseDistance + (maxDistance - baseDistance) * speedRatio;
 
     // Get kart forward direction for camera positioning
     const kartForward = new Vector3(0, 0, 1).applyEuler(kartRotation);
