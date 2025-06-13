@@ -1,0 +1,435 @@
+# Kart Racing Technical Architecture
+
+## System Overview
+
+The kart racing implementation extends the existing 3D web experience architecture by introducing a parallel control system that can coexist with the current character-based movement. This approach ensures minimal disruption while providing the foundation for kart racing mechanics.
+
+## Core Components Architecture
+
+### 1. KartController (New Component)
+
+**Location**: `packages/3d-web-client-core/src/character/KartController.ts`
+
+```typescript
+export interface KartPhysicsConfig {
+  maxSpeed: number;           // Maximum forward speed (m/s)
+  acceleration: number;       // Forward acceleration (m/s²)
+  deceleration: number;       // Braking/friction deceleration (m/s²)
+  reverseMaxSpeed: number;    // Maximum reverse speed (m/s)
+  steeringSpeed: number;      // Angular velocity when turning (rad/s)
+  driftFactor: number;        // Lateral friction reduction during drift (0-1)
+  bounceRestitution: number;  // Collision bounce factor (0-1)
+  groundFriction: number;     // Base friction coefficient
+  airResistance: number;      // Speed-based resistance
+}
+
+export class KartController {
+  // Physics state
+  private velocity: Vector3;
+  private angularVelocity: number;
+  private forwardSpeed: number;
+  private steeringInput: number;
+  private throttleInput: number;
+  private isDrifting: boolean;
+  
+  // Collision detection
+  private kartBounds: Box3;
+  private groundRaycaster: Raycaster;
+  
+  constructor(config: KartPhysicsConfig, character: Character) {
+    // Initialize physics properties
+  }
+  
+  public update(deltaTime: number, controlInput: KartControlInput): void {
+    this.processInput(controlInput);
+    this.updatePhysics(deltaTime);
+    this.handleCollisions();
+    this.updateCharacterTransform();
+  }
+  
+  private updatePhysics(deltaTime: number): void {
+    // Forward/backward movement
+    this.updateLinearVelocity(deltaTime);
+    
+    // Rotation based on steering and forward speed
+    this.updateAngularVelocity(deltaTime);
+    
+    // Apply friction and air resistance
+    this.applyResistance(deltaTime);
+    
+    // Handle drift mechanics
+    this.processDrift(deltaTime);
+  }
+}
+```
+
+### 2. Enhanced Input System
+
+**Location**: `packages/3d-web-client-core/src/input/KeyInputManager.ts`
+
+**New Interface**:
+```typescript
+export interface KartControlInput {
+  throttle: number;    // -1 (reverse) to 1 (forward)
+  steering: number;    // -1 (left) to 1 (right)
+  drift: boolean;      // handbrake/drift mode
+  boost: boolean;      // future power-up system
+}
+
+export interface CharacterControlInput {
+  direction: number | null;
+  isSprinting: boolean;
+  jump: boolean;
+}
+
+export type ControlInput = KartControlInput | CharacterControlInput;
+```
+
+**Enhanced KeyInputManager**:
+```typescript
+export class KeyInputManager {
+  private controlMode: 'character' | 'kart' = 'character';
+  
+  public setControlMode(mode: 'character' | 'kart'): void {
+    this.controlMode = mode;
+  }
+  
+  public getOutput(): ControlInput | null {
+    if (this.controlMode === 'kart') {
+      return this.getKartOutput();
+    }
+    return this.getCharacterOutput();
+  }
+  
+  private getKartOutput(): KartControlInput | null {
+    const forward = this.isKeyPressed(Key.W);
+    const backward = this.isKeyPressed(Key.S);
+    const left = this.isKeyPressed(Key.A);
+    const right = this.isKeyPressed(Key.D);
+    const drift = this.isKeyPressed(Key.SPACE);
+    const boost = this.isKeyPressed(Key.SHIFT);
+    
+    const throttle = (forward ? 1 : 0) + (backward ? -1 : 0);
+    const steering = (right ? 1 : 0) + (left ? -1 : 0);
+    
+    if (throttle === 0 && steering === 0 && !drift && !boost) {
+      return null;
+    }
+    
+    return { throttle, steering, drift, boost };
+  }
+}
+```
+
+### 3. Enhanced CharacterManager
+
+**Location**: `packages/3d-web-client-core/src/character/CharacterManager.ts`
+
+**New Configuration**:
+```typescript
+export interface CharacterManagerConfig {
+  // Existing properties...
+  gameMode?: 'character' | 'kart';
+  kartPhysicsConfig?: KartPhysicsConfig;
+}
+
+export class CharacterManager {
+  private kartController?: KartController;
+  private gameMode: 'character' | 'kart' = 'character';
+  
+  public spawnLocalCharacter(
+    id: number,
+    username: string,
+    characterDescription: CharacterDescription,
+    spawnPosition: Vector3,
+    spawnRotation: Euler,
+  ) {
+    // Create character (visual representation)
+    const character = new Character({...});
+    
+    // Choose controller based on game mode
+    if (this.gameMode === 'kart') {
+      this.kartController = new KartController(
+        this.config.kartPhysicsConfig,
+        character
+      );
+      this.config.keyInputManager.setControlMode('kart');
+    } else {
+      this.localController = new LocalController({...});
+      this.config.keyInputManager.setControlMode('character');
+    }
+    
+    // Rest of spawn logic...
+  }
+  
+  public update(): void {
+    if (this.gameMode === 'kart' && this.kartController) {
+      const controlInput = this.config.keyInputManager.getOutput() as KartControlInput;
+      this.kartController.update(this.config.timeManager.deltaTime, controlInput);
+    } else if (this.localController) {
+      this.localController.update();
+    }
+    
+    // Update camera and other systems...
+  }
+}
+```
+
+### 4. Enhanced Camera System
+
+**Location**: `packages/3d-web-client-core/src/camera/CameraManager.ts`
+
+**Kart Camera Mode**:
+```typescript
+export class CameraManager {
+  private cameraMode: 'character' | 'kart' = 'character';
+  private kartCameraConfig = {
+    minDistance: 4,
+    maxDistance: 15,
+    heightOffset: 2.5,
+    lookAheadDistance: 3,
+    speedResponseFactor: 0.4,
+    turnPredictionFactor: 0.3
+  };
+  
+  public setCameraMode(mode: 'character' | 'kart'): void {
+    this.cameraMode = mode;
+    this.adjustForMode();
+  }
+  
+  private adjustForMode(): void {
+    if (this.cameraMode === 'kart') {
+      this.minDistance = this.kartCameraConfig.minDistance;
+      this.maxDistance = this.kartCameraConfig.maxDistance;
+      this.damping = 0.1; // More responsive for kart
+    } else {
+      // Reset to character defaults
+      this.minDistance = camValues.minDistance;
+      this.maxDistance = camValues.maxDistance;
+      this.damping = camValues.damping;
+    }
+  }
+  
+  public updateKartCamera(kartPosition: Vector3, kartVelocity: Vector3, kartRotation: Euler): void {
+    if (this.cameraMode !== 'kart') return;
+    
+    const speed = kartVelocity.length();
+    
+    // Dynamic distance based on speed
+    const dynamicDistance = this.kartCameraConfig.minDistance + 
+      (speed / 20) * (this.kartCameraConfig.maxDistance - this.kartCameraConfig.minDistance);
+    
+    // Look-ahead target based on velocity
+    const lookAhead = kartVelocity.clone()
+      .normalize()
+      .multiplyScalar(this.kartCameraConfig.lookAheadDistance * Math.min(speed / 10, 1));
+    
+    // Height offset for better track visibility
+    const heightOffset = new Vector3(0, this.kartCameraConfig.heightOffset, 0);
+    
+    const targetPosition = kartPosition.clone().add(lookAhead).add(heightOffset);
+    
+    this.setTarget(targetPosition);
+    this.targetDistance = dynamicDistance;
+  }
+}
+```
+
+### 5. Visual Kart Representation
+
+**Location**: `packages/3d-web-client-core/src/character/KartMesh.ts`
+
+```typescript
+export class KartMesh extends Group {
+  private kartBody: Mesh;
+  private wheels: Mesh[] = [];
+  
+  constructor() {
+    super();
+    this.createKartGeometry();
+  }
+  
+  private createKartGeometry(): void {
+    // Main body (cube for now)
+    const bodyGeometry = new BoxGeometry(1.8, 0.6, 1.2);
+    const bodyMaterial = new MeshStandardMaterial({ 
+      color: 0x3366cc,
+      metalness: 0.3,
+      roughness: 0.7
+    });
+    this.kartBody = new Mesh(bodyGeometry, bodyMaterial);
+    this.kartBody.position.y = 0.4;
+    this.add(this.kartBody);
+    
+    // Wheels
+    this.createWheels();
+  }
+  
+  private createWheels(): void {
+    const wheelGeometry = new CylinderGeometry(0.25, 0.25, 0.15, 12);
+    const wheelMaterial = new MeshStandardMaterial({ color: 0x222222 });
+    
+    const wheelPositions = [
+      { x: -0.8, y: 0.25, z: 0.5 },  // Front left
+      { x: 0.8, y: 0.25, z: 0.5 },   // Front right
+      { x: -0.8, y: 0.25, z: -0.5 }, // Rear left
+      { x: 0.8, y: 0.25, z: -0.5 }   // Rear right
+    ];
+    
+    wheelPositions.forEach(pos => {
+      const wheel = new Mesh(wheelGeometry, wheelMaterial);
+      wheel.position.set(pos.x, pos.y, pos.z);
+      wheel.rotation.z = Math.PI / 2;
+      this.wheels.push(wheel);
+      this.add(wheel);
+    });
+  }
+  
+  public updateWheelRotation(speed: number, deltaTime: number): void {
+    const rotationSpeed = speed * deltaTime * 2; // Adjust for wheel circumference
+    this.wheels.forEach(wheel => {
+      wheel.rotation.x += rotationSpeed;
+    });
+  }
+  
+  public updateSteeringWheels(steeringAngle: number): void {
+    // Rotate front wheels for steering visual
+    this.wheels[0].rotation.y = steeringAngle * 0.5;
+    this.wheels[1].rotation.y = steeringAngle * 0.5;
+  }
+}
+```
+
+### 6. Updated Character Class
+
+**Location**: `packages/3d-web-client-core/src/character/Character.ts`
+
+**Enhanced for Kart Mode**:
+```typescript
+export class Character extends Group {
+  private kartMesh?: KartMesh;
+  private visualMode: 'character' | 'kart' = 'character';
+  
+  public setVisualMode(mode: 'character' | 'kart'): void {
+    if (this.visualMode === mode) return;
+    
+    this.visualMode = mode;
+    this.updateVisualRepresentation();
+  }
+  
+  private async updateVisualRepresentation(): Promise<void> {
+    // Clear existing visual
+    if (this.model?.mesh) {
+      this.remove(this.model.mesh);
+    }
+    if (this.kartMesh) {
+      this.remove(this.kartMesh);
+    }
+    
+    if (this.visualMode === 'kart') {
+      this.kartMesh = new KartMesh();
+      this.add(this.kartMesh);
+    } else {
+      // Load character model as before
+      await this.load();
+    }
+    
+    this.setTooltipHeights();
+  }
+  
+  public updateKartVisuals(speed: number, steeringAngle: number, deltaTime: number): void {
+    if (this.kartMesh) {
+      this.kartMesh.updateWheelRotation(speed, deltaTime);
+      this.kartMesh.updateSteeringWheels(steeringAngle);
+    }
+  }
+}
+```
+
+## Network State Updates
+
+**Location**: `packages/3d-web-client-core/src/character/CharacterState.ts`
+
+```typescript
+export interface BaseCharacterState {
+  id: number;
+  position: { x: number; y: number; z: number };
+  rotation: { quaternionY: number; quaternionW: number };
+}
+
+export interface HumanoidCharacterState extends BaseCharacterState {
+  type: 'humanoid';
+  state: AnimationState;
+}
+
+export interface KartCharacterState extends BaseCharacterState {
+  type: 'kart';
+  velocity: { x: number; y: number; z: number };
+  angularVelocity: number;
+  isDrifting: boolean;
+  speed: number;
+}
+
+export type CharacterState = HumanoidCharacterState | KartCharacterState;
+```
+
+## Configuration System
+
+**Location**: `packages/3d-web-experience-client/src/Networked3dWebExperienceClient.ts`
+
+```typescript
+export interface GameConfiguration {
+  gameMode: 'character' | 'kart';
+  kartSettings?: {
+    physics: KartPhysicsConfig;
+    camera: {
+      followDistance: { min: number; max: number };
+      heightOffset: number;
+      lookAhead: number;
+    };
+    visual: {
+      kartColor: string;
+      showSpeedometer: boolean;
+    };
+  };
+}
+
+export class Networked3dWebExperienceClient {
+  constructor(holder: HTMLElement, config: Config & { gameConfiguration?: GameConfiguration }) {
+    // Apply game configuration
+    if (config.gameConfiguration?.gameMode === 'kart') {
+      this.setupKartMode(config.gameConfiguration);
+    }
+  }
+  
+  private setupKartMode(gameConfig: GameConfiguration): void {
+    // Configure character manager for kart mode
+    // Set up kart-specific camera settings
+    // Initialize kart physics configuration
+  }
+}
+```
+
+## Integration Points
+
+### 1. Collision System Integration
+- Existing `CollisionsManager` remains unchanged
+- KartController uses box collision instead of capsule
+- Enhanced collision response for kart bouncing/deflection
+
+### 2. Network Synchronization
+- Extend existing network protocol to handle kart state
+- Maintain backwards compatibility with character mode
+- Add interpolation for kart-specific properties
+
+### 3. Performance Considerations
+- Physics updates run at consistent 60fps
+- Collision detection optimized for high-speed scenarios
+- Camera updates balanced for responsiveness vs. stability
+
+### 4. Testing Integration
+- Unit tests for KartController physics
+- Integration tests for kart-character mode switching
+- Network synchronization tests for multi-player kart scenarios
+
+This architecture ensures that the kart racing system integrates seamlessly with the existing codebase while maintaining the ability to switch between character and kart modes dynamically. 
