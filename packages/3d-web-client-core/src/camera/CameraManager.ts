@@ -237,36 +237,38 @@ export class CameraManager {
 
     // Calculate speed-responsive camera distance (pull back when accelerating)
     const speed = kartVelocity.length();
-    const maxKartSpeed = 30; // Updated to match KartController maxSpeed
+    const maxKartSpeed = 60; // Updated to match new doubled maxSpeed (1000 scaled down)
     const speedRatio = Math.min(speed / maxKartSpeed, 1);
 
     // Dynamic distance: closer when stationary, further back at high speed
-    // Start at 6m when stationary, pull back to 11m at max speed (25% shorter than before)
+    // Start at 6m when stationary, pull back to 12m at max speed for higher speeds
     const baseDistance = 6;
-    const maxDistance = 11; // Reduced from 15m
-    // Slower pull back: use square root to make the transition more gradual
-    const slowSpeedRatio = Math.sqrt(speedRatio);
-    const dynamicDistance = baseDistance + (maxDistance - baseDistance) * slowSpeedRatio;
+    const maxDistance = 12; // Slightly increased for higher speeds
+    // Smoother pull back: use a gentler curve to reduce jarring
+    const smoothSpeedRatio = Math.pow(speedRatio, 0.6); // Gentler curve than sqrt
+    const dynamicDistance = baseDistance + (maxDistance - baseDistance) * smoothSpeedRatio;
 
     // Get kart forward direction for camera positioning
     const kartForward = new Vector3(0, 0, 1).applyEuler(kartRotation);
 
-    // Look-ahead prediction: anticipate turns based on velocity direction
-    const lookAheadFactor = 0.4; // Increased from 0.3 for better anticipation
+    // Look-ahead prediction: much more conservative to prevent camera swinging
+    const lookAheadFactor = 0.08; // Much smaller for stability
+    const maxLookAheadDistance = 3; // Cap the look-ahead distance regardless of speed
     const lookAheadPosition = kartPosition.clone();
 
-    if (speed > 0.5) {
-      // Use velocity direction for look-ahead when moving
+    if (speed > 1.0) {
+      // Use velocity direction for look-ahead when moving, but cap the distance
       const velocityDirection = kartVelocity.clone().normalize();
-      lookAheadPosition.add(velocityDirection.multiplyScalar(lookAheadFactor * speed));
+      const lookAheadDistance = Math.min(lookAheadFactor * speed, maxLookAheadDistance);
+      lookAheadPosition.add(velocityDirection.multiplyScalar(lookAheadDistance));
     } else {
       // Use kart facing direction when stationary/slow
-      lookAheadPosition.add(kartForward.clone().multiplyScalar(1.0));
+      lookAheadPosition.add(kartForward.clone().multiplyScalar(0.5));
     }
 
     // Height offset: lower when going fast for speed sensation
     const baseHeight = 2.5;
-    const speedHeightReduction = speedRatio * 0.5; // Lower by up to 0.5m at max speed
+    const speedHeightReduction = speedRatio * 0.3; // Reduced from 0.5 for gentler height changes
     const kartHeightOffset = baseHeight - speedHeightReduction;
 
     const targetPosition = lookAheadPosition.clone();
@@ -287,20 +289,49 @@ export class CameraManager {
     const dz = cameraPosition.z - targetPosition.z;
 
     const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    const theta = Math.atan2(dz, dx);
+    let theta = Math.atan2(dz, dx);
     const phi = Math.acos(dy / distance);
 
-    // Set camera angles and distance
-    this.targetTheta = theta;
-    this.theta = theta;
-    this.targetPhi = phi;
-    this.phi = phi;
+    // ANGULAR CONSTRAINT: Prevent camera from swinging too far from behind the kart
+    const maxSwingAngle = Math.PI / 6; // 30 degrees - reasonable constraint
 
-    // Update camera target and distance
+    // Calculate kart's REAR direction angle (opposite of forward direction)
+    const kartRearTheta = Math.atan2(kartForward.z, kartForward.x) + Math.PI;
+
+    // Calculate how far the desired camera angle deviates from the kart's rear
+    let deviationFromRear = theta - kartRearTheta;
+
+    // Normalize to shortest path
+    while (deviationFromRear > Math.PI) deviationFromRear -= 2 * Math.PI;
+    while (deviationFromRear < -Math.PI) deviationFromRear += 2 * Math.PI;
+
+    // Clamp deviation to prevent excessive swinging
+    deviationFromRear = Math.max(-maxSwingAngle, Math.min(maxSwingAngle, deviationFromRear));
+
+    // Apply the constraint
+    theta = kartRearTheta + deviationFromRear;
+
+    // SMOOTH CAMERA MOVEMENTS: Use interpolation instead of direct assignment
+    // This prevents jarring camera movements during acceleration/deceleration
+    // Made much more responsive to keep up with high-speed rotations
+    const cameraSmoothing = 0.6; // Much more responsive for angle transitions
+    const distanceSmoothing = 0.3; // More responsive distance transitions
+
+    // Calculate shortest path for theta to prevent long-way-around issues
+    let thetaDifference = theta - this.targetTheta;
+    while (thetaDifference > Math.PI) thetaDifference -= 2 * Math.PI;
+    while (thetaDifference < -Math.PI) thetaDifference += 2 * Math.PI;
+
+    // Apply smoothing with shortest path
+    this.targetTheta += thetaDifference * cameraSmoothing;
+    this.targetPhi += (phi - this.targetPhi) * cameraSmoothing;
+
+    // Smoothly interpolate camera distance
+    this.targetDistance += (distance - this.targetDistance) * distanceSmoothing;
+    this.desiredDistance = this.targetDistance;
+
+    // Update camera target smoothly
     this.setTarget(targetPosition);
-    this.targetDistance = distance;
-    this.desiredDistance = distance;
-    this.distance = distance;
   }
 
   public reverseUpdateFromPositions(): void {

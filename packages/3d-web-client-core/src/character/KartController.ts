@@ -42,8 +42,8 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 500,
-    acceleration: 50,
+    maxSpeed: 300, // Doubled from 500 for higher top speed
+    acceleration: 75,
     deceleration: 70,
     steeringSpeed: 2.5,
     driftFactor: 0.4,
@@ -156,9 +156,10 @@ export class KartController {
 
     // Automatic drift when turning hard at speed
     const speed = this.velocity.length();
-    const isHardTurning = Math.abs(this.steeringInput) > 0.6;
-    const isMovingFast = speed > 15;
-    this.isDrifting = isHardTurning && isMovingFast && Math.abs(this.throttleInput) > 0.3;
+    const isHardTurning = Math.abs(this.steeringInput) > 0.4; // Easier to trigger drift
+    const isMovingFast = speed > 8; // Lower speed threshold
+    // Enter drift state when turning hard at speed
+    this.isDrifting = isHardTurning && isMovingFast && Math.abs(this.throttleInput) > 0.2;
   }
 
   private smoothInput(current: number, target: number, rate: number): number {
@@ -267,19 +268,35 @@ export class KartController {
         // Driving normally - reduced grip
         this.velocity.multiplyScalar(this.kartConfig.groundFriction);
       }
-      // When drifting, apply even less friction for more sliding
+      // When drifting, friction is handled in processDrift() method for proper lateral sliding
     }
   }
 
   private processDrift(deltaTime: number): void {
     if (this.isDrifting) {
+      // PROPER DRIFT PHYSICS: Preserve momentum while reducing lateral grip
+      // The key is to maintain the original velocity direction while allowing some steering influence
       const forward = this.config.character.getWorldDirection(new Vector3());
-      const velocityForward = this.velocity.clone().projectOnVector(forward);
-      const velocityLateral = this.velocity.clone().sub(velocityForward);
-
-      velocityLateral.multiplyScalar(this.kartConfig.driftFactor);
-      this.velocity.copy(velocityForward.add(velocityLateral));
+      const speed = this.velocity.length();
+      if (speed > 0.1) {
+        // Calculate how much the velocity direction differs from where the car is pointing
+        const velocityDirection = this.velocity.clone().normalize();
+        // Instead of forcing alignment, let the car "slide" in its momentum direction
+        // while gradually allowing steering to influence the velocity
+        const steeringInfluence = 0.3; // How much steering can influence drift direction
+        const momentumPreservation = 1 - steeringInfluence;
+        // Preserve most of the original momentum direction
+        const preservedVelocity = velocityDirection.multiplyScalar(speed * momentumPreservation);
+        // Add small steering influence based on car's forward direction
+        const steeringVelocity = forward.multiplyScalar(speed * steeringInfluence);
+        // Combine preserved momentum with steering influence
+        this.velocity.copy(preservedVelocity.add(steeringVelocity));
+        // Apply drift-specific friction (less than normal driving)
+        const driftFriction = 0.98; // Much less friction during drift
+        this.velocity.multiplyScalar(driftFriction);
+      }
     } else {
+      // Normal driving: gradually align velocity with car direction
       const forward = this.config.character.getWorldDirection(new Vector3());
       const speed = this.velocity.length();
 
