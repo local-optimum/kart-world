@@ -42,13 +42,13 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 25,
-    acceleration: 5,
-    deceleration: 12,
-    steeringSpeed: 2.5,
+    maxSpeed: 30,
+    acceleration: 15,
+    deceleration: 20,
+    steeringSpeed: 1.5,
     driftFactor: 0.7,
     groundFriction: 0.95,
-    airResistance: 0.03,
+    airResistance: 0.025,
     bounceRestitution: 0.6,
   };
 
@@ -199,13 +199,11 @@ export class KartController {
   private updateAngularVelocity(deltaTime: number): void {
     if (Math.abs(this.steeringInput) > 0.01) {
       const forwardSpeed = this.velocity.length();
-      
       // Improved speed factor for better turning feel
       // More responsive at low speeds, more realistic at high speeds
       const minSpeedFactor = 0.3; // Minimum turning ability at very low speeds
       const speedForTurning = 8; // Speed at which turning reaches full effectiveness
       const speedFactor = minSpeedFactor + (1 - minSpeedFactor) * Math.min(forwardSpeed / speedForTurning, 1);
-      
       const effectiveSteering = this.steeringInput * speedFactor;
 
       this.angularVelocity = effectiveSteering * this.kartConfig.steeringSpeed;
@@ -230,7 +228,7 @@ export class KartController {
     if (this.isGrounded) {
       if (Math.abs(this.throttleInput) < 0.01) {
         // Coasting - stronger ground friction for natural slowdown
-        const coastingFriction = 0.92; // More friction when coasting
+        const coastingFriction = 0.97; // Reduced from 0.92 for longer coasting
         this.velocity.multiplyScalar(coastingFriction);
       } else if (!this.isDrifting) {
         // Driving normally - normal ground friction
