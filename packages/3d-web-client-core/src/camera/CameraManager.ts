@@ -1,4 +1,4 @@
-import { PerspectiveCamera, Raycaster, Vector3 } from "three";
+import { Euler, PerspectiveCamera, Raycaster, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import { CollisionsManager } from "../collisions/CollisionsManager";
@@ -231,28 +231,72 @@ export class CameraManager {
     this.setTarget(target);
   }
 
-  public updateForKart(kartPosition: Vector3, kartVelocity: Vector3): void {
-    // Calculate speed-responsive camera distance
+  public updateForKart(kartPosition: Vector3, kartVelocity: Vector3, kartRotation: Euler): void {
+    // Disable manual camera controls when using kart camera
+    this.disableManualControls();
+
+    // Calculate speed-responsive camera distance (pull back when accelerating)
     const speed = kartVelocity.length();
     const maxKartSpeed = 20; // Match KartController maxSpeed
     const speedRatio = Math.min(speed / maxKartSpeed, 1);
-    
-    // Dynamic distance: 4m at standstill, up to 15m at max speed
-    const dynamicDistance = this.minDistance + (this.maxDistance - this.minDistance) * speedRatio;
-    
-    // Look-ahead prediction: anticipate turns based on velocity
-    const lookAheadFactor = 0.5; // How far ahead to look
-    const lookAheadPosition = kartPosition.clone().add(kartVelocity.clone().multiplyScalar(lookAheadFactor));
-    
-    // Height offset: 2.5m above kart for better racing view
-    const kartHeightOffset = 2.5;
+
+    // Dynamic distance: further back at high speed, closer when slow/stationary
+    // 15m at max speed, down to 4m when stationary (reversed from before)
+    const dynamicDistance = this.maxDistance - (this.maxDistance - this.minDistance) * speedRatio;
+
+    // Get kart forward direction for camera positioning
+    const kartForward = new Vector3(0, 0, 1).applyEuler(kartRotation);
+
+    // Look-ahead prediction: anticipate turns based on velocity direction
+    const lookAheadFactor = 0.3; // Reduced for better control
+    const lookAheadPosition = kartPosition.clone();
+
+    if (speed > 0.5) {
+      // Use velocity direction for look-ahead when moving
+      const velocityDirection = kartVelocity.clone().normalize();
+      lookAheadPosition.add(velocityDirection.multiplyScalar(lookAheadFactor * speed));
+    } else {
+      // Use kart facing direction when stationary/slow
+      lookAheadPosition.add(kartForward.clone().multiplyScalar(1.0));
+    }
+
+    // Height offset: lower when going fast for speed sensation
+    const baseHeight = 2.5;
+    const speedHeightReduction = speedRatio * 0.5; // Lower by up to 0.5m at max speed
+    const kartHeightOffset = baseHeight - speedHeightReduction;
+
     const targetPosition = lookAheadPosition.clone();
     targetPosition.y += kartHeightOffset;
-    
+
+    // Calculate camera position behind the kart using its forward direction
+    const kartForwardNormalized = kartForward.clone().normalize();
+
+    // Position camera behind kart (opposite to forward direction)
+    const cameraOffset = kartForwardNormalized.clone().multiplyScalar(-dynamicDistance);
+    cameraOffset.y += kartHeightOffset; // Add height offset
+
+    const cameraPosition = kartPosition.clone().add(cameraOffset);
+
+    // Convert to spherical coordinates for the camera system
+    const dx = cameraPosition.x - targetPosition.x;
+    const dy = cameraPosition.y - targetPosition.y;
+    const dz = cameraPosition.z - targetPosition.z;
+
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const theta = Math.atan2(dz, dx);
+    const phi = Math.acos(dy / distance);
+
+    // Set camera angles and distance
+    this.targetTheta = theta;
+    this.theta = theta;
+    this.targetPhi = phi;
+    this.phi = phi;
+
     // Update camera target and distance
     this.setTarget(targetPosition);
-    this.targetDistance = dynamicDistance;
-    this.desiredDistance = dynamicDistance;
+    this.targetDistance = distance;
+    this.desiredDistance = distance;
+    this.distance = distance;
   }
 
   public reverseUpdateFromPositions(): void {
@@ -333,9 +377,9 @@ export class CameraManager {
       target.multiplyScalar(this.targetDistance).add(this.camera.position);
       this.orbitControls.target.copy(target);
       this.orbitControls.update();
-      this.disposeEventHandlers();
+      this.disableManualControls();
     } else {
-      this.createEventHandlers();
+      this.enableManualControls();
     }
   }
 
@@ -379,6 +423,22 @@ export class CameraManager {
   }
 
   public hasActiveInput(): boolean {
+    // If manual controls are disabled (kart mode), no active input
+    if (!this.eventHandlerCollection) {
+      return false;
+    }
     return this.activePointers.size > 0;
+  }
+
+  public enableManualControls(): void {
+    if (!this.eventHandlerCollection) {
+      this.createEventHandlers();
+    }
+  }
+
+  public disableManualControls(): void {
+    if (this.eventHandlerCollection) {
+      this.disposeEventHandlers();
+    }
   }
 }

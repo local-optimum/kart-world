@@ -281,7 +281,8 @@ export class CharacterManager {
       // Use kart-optimized camera with speed-responsive distance and look-ahead
       const kartPosition = this.localCharacter.position;
       const kartVelocity = this.localController.getVelocity();
-      this.config.cameraManager.updateForKart(kartPosition, kartVelocity);
+      const kartRotation = this.localCharacter.rotation;
+      this.config.cameraManager.updateForKart(kartPosition, kartVelocity, kartRotation);
 
       for (const [id, update] of this.config.remoteUserStates) {
         if (this.remoteCharacters.has(id) && this.speakingCharacters.has(id)) {
