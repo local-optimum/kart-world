@@ -112,6 +112,7 @@ export class CharacterManager {
       cameraManager: this.config.cameraManager,
       composer: this.config.composer,
       isLocal: true,
+      kartMode: true,
     });
     const quaternion = new Quaternion().setFromEuler(character.rotation);
     this.config.sendUpdate({
@@ -193,6 +194,7 @@ export class CharacterManager {
       cameraManager: this.config.cameraManager,
       composer: this.config.composer,
       isLocal: false,
+      kartMode: true,
     });
 
     this.remoteCharacters.set(id, character);

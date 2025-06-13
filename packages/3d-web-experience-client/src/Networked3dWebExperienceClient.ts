@@ -608,7 +608,8 @@ export class Networked3dWebExperienceClient {
           this.characterControllerPaneSet = true;
           this.characterManager.setupTweakPane(this.tweakPane);
         } else {
-          this.tweakPane.updateCharacterData(this.characterManager.localController);
+          // TODO: Update TweakPane to work with KartController
+          // this.tweakPane.updateCharacterData(this.characterManager.localController);
         }
       }
     }

@@ -168,6 +168,10 @@ export class KartController {
     this.applyResistance(deltaTime);
     this.processDrift(deltaTime);
     this.updateCharacterTransform(deltaTime);
+
+    // Update visual kart animations (wheels, etc.)
+    const currentSpeed = this.velocity.length();
+    this.config.character.updateKartMovement(currentSpeed, this.steeringInput, deltaTime);
   }
 
   private updateLinearVelocity(deltaTime: number): void {
