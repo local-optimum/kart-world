@@ -43,8 +43,8 @@ export class KartController {
 
   private kartConfig: KartPhysicsConfig = {
     maxSpeed: 25,
-    acceleration: 5,
-    deceleration: 12,
+    acceleration: 7,
+    deceleration: 6,
     steeringSpeed: 2.5,
     driftFactor: 0.7,
     groundFriction: 0.98,
