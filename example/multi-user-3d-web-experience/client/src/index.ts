@@ -7,6 +7,7 @@ import doubleJumpAnimationFileUrl from "../../../assets/models/anim_double_jump.
 import idleAnimationFileUrl from "../../../assets/models/anim_idle.glb";
 import jogAnimationFileUrl from "../../../assets/models/anim_jog.glb";
 import sprintAnimationFileUrl from "../../../assets/models/anim_run.glb";
+import goKartModelUrl from "../../../assets/models/go_kart.glb";
 
 const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 const host = window.location.host;
