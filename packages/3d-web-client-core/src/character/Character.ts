@@ -17,7 +17,6 @@ export type AnimationConfig = {
   sprintAnimationFileUrl: string;
   airAnimationFileUrl: string;
   doubleJumpAnimationFileUrl: string;
-  kartModelUrl?: string;
 };
 
 export type CharacterDescription =
@@ -152,7 +151,7 @@ export class Character extends Group {
       kartColor: this.generateKartColor(),
       wheelColor: 0x333333,
       showWheels: false, // Don't create programmatic wheels since we're using GLB
-      modelUrl: this.config.animationConfig.kartModelUrl || "/assets/models/go_kart.glb",
+      modelUrl: "/assets/models/go_kart.glb",
       characterModelLoader: this.config.characterModelLoader,
       ...this.config.kartConfig,
     };
