@@ -25,6 +25,7 @@ const app = new Networked3dWebExperienceClient(holder, {
     jogAnimationFileUrl,
     sprintAnimationFileUrl,
     doubleJumpAnimationFileUrl,
+    kartModelUrl: goKartModelUrl,
   },
   mmlDocuments: { example: { url: `${protocol}//${host}/mml-documents/example-mml.html` } },
   environmentConfiguration: {
