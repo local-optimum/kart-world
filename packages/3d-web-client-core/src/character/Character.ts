@@ -151,7 +151,8 @@ export class Character extends Group {
       kartColor: this.generateKartColor(),
       wheelColor: 0x333333,
       showWheels: false, // Don't create programmatic wheels since we're using GLB
-      modelUrl: "/assets/models/go_kart.glb",
+      modelUrl:
+        "https://mmlstorage.com/e8e6cfb13c2ac73aa221f1b4d2983bbe801b51ac05ae16f60eceb496eacceaf1",
       characterModelLoader: this.config.characterModelLoader,
       ...this.config.kartConfig,
     };
@@ -246,7 +247,6 @@ export class Character extends Group {
   private addTrailPoints(wheelPositions: Vector3[], velocity?: Vector3) {
     // Use velocity vector magnitude for more accurate speed (includes slides)
     const currentSpeed = velocity ? velocity.length() : Math.abs(this.lastSpeed);
-    
     wheelPositions.forEach((position, index) => {
       if (index < this.skidParticleSystems.length) {
         this.skidParticleSystems[index].addPoint(position, currentSpeed);
@@ -263,7 +263,7 @@ export class Character extends Group {
       const trail = new PathTrail({
         maxPoints: 60, // Good length for performance
         baseWidth: 0.4, // Nice thick base width
-        maxWidth: 1.0, // Very thick at high speed  
+        maxWidth: 1.0, // Very thick at high speed
         color: new Color(0xeeeeee), // Bright white/light grey smoke core
         glowColor: new Color(0x888888), // Medium grey smoke outer edge
         fadeTime: 3.5, // Trail fades over 3.5 seconds
@@ -273,7 +273,6 @@ export class Character extends Group {
 
       // Set camera reference for billboarding
       trail.setCamera(this.config.cameraManager.camera);
-      
       trail.startTrail();
       const initialSpeed = velocity ? velocity.length() : Math.abs(this.lastSpeed);
       trail.addPoint(position, initialSpeed);
