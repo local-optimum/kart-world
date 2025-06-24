@@ -74,7 +74,7 @@ const networked3dWebExperienceServer = new Networked3dWebExperienceServer({
   },
   chatNetworkPath: "/chat-network",
   assetServing: {
-    assetsDir: path.resolve(dirname, "../../../assets/"),
+    assetsDir: path.resolve(process.cwd(), "assets/"),
     assetsUrl: "/assets/",
   },
 });

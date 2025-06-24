@@ -1,4 +1,20 @@
-<m-group id="stairs" z="10" y="0.1"></m-group>
+<!-- <m-group id="stairs" z="10" y="0.1"></m-group> -->
+
+<!-- Race Track Environment -->
+<m-model 
+  id="racetrack" 
+  src="https://mmlstorage.com/62684958d53981efb6263b5ce6e44911c912b5bee11a94b00b204543311c4a2e"
+  x="-235.366" 
+  y="18.59" 
+  z="44.947"
+  rx="0"
+  ry="0" 
+  rz="0"
+  sx="0.1"
+  sy="0.1"
+  sz="0.1"
+  collision-interval="100"
+></m-model>
 
 <script>
   const stairs = document.getElementById("stairs");
@@ -18,21 +34,5 @@
     return hex;
   }
 
-  for (let i = 0; i < 15; i++) {
-    const stair = document.createElement("m-cube");
-    stair.setAttribute("z", i * 0.5);
-    stair.setAttribute("y", i * 0.2);
-    stair.setAttribute("width", 2);
-    stair.setAttribute("height", 0.2);
-    stair.setAttribute("depth", 0.5);
-    stair.setAttribute("color", "blue");
-    stair.setAttribute("collision-interval","1000");
-    stair.addEventListener("collisionstart", () => {
-      stair.setAttribute("color", "white");
-    });
-    stair.addEventListener("collisionend", () => {
-      stair.setAttribute("color", getHexForCurrentTime(0.5));
-    });
-    stairs.append(stair);
-  }
+  // Debug elements removed for clean racing environment
 </script>

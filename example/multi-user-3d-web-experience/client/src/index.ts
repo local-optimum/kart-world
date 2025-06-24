@@ -1,6 +1,6 @@
 import { Networked3dWebExperienceClient } from "@mml-io/3d-web-experience-client";
 
-import hdrJpgUrl from "../../../assets/hdr/puresky_2k.jpg";
+import hdrJpgUrl from "../../../assets/hdr/rooftop_night_2k.jpg";
 import loadingBackground from "../../../assets/images/loading-bg.jpg";
 import airAnimationFileUrl from "../../../assets/models/anim_air.glb";
 import doubleJumpAnimationFileUrl from "../../../assets/models/anim_double_jump.glb";
@@ -30,6 +30,20 @@ const app = new Networked3dWebExperienceClient(holder, {
     skybox: {
       hdrJpgUrl: hdrJpgUrl,
     },
+    groundPlane: false,
+    sun: {
+      azimuthalAngle: 270, // West direction for evening sun
+      polarAngle: -15, // Lower angle for evening/sunset
+      intensity: 2.5, // Softer evening light
+    },
+    ambientLight: {
+      intensity: 0.4, // Slightly brighter ambient for evening visibility
+    },
+    fog: {
+      fogNear: 80,
+      fogFar: 300,
+      fogColor: { r: 0.6, g: 0.5, b: 0.7 }, // Lighter purple-ish evening fog
+    },
   },
   avatarConfiguration: {
     availableAvatars: [
@@ -50,6 +64,16 @@ const app = new Networked3dWebExperienceClient(holder, {
   },
   spawnConfiguration: {
     enableRespawnButton: true,
+    spawnPosition: {
+      x: 0,
+      y: 200,
+      z: 0,
+    },
+    spawnPositionVariance: {
+      x: 10,
+      y: 5,
+      z: 10,
+    },
   },
 });
 

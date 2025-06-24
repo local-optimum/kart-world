@@ -371,7 +371,176 @@ export class KartController {
   }
 
   private updateCharacterTransform(deltaTime: number): void {
-    this.config.character.position.add(this.velocity.clone().multiplyScalar(deltaTime));
+    // Store previous position for collision detection
+    const previousPosition = this.config.character.position.clone();
+
+    // Apply movement
+    const deltaMovement = this.velocity.clone().multiplyScalar(deltaTime);
+    this.config.character.position.add(deltaMovement);
+
+    // Check for collisions and apply collision response
+    this.handleCollisions(previousPosition, deltaTime);
+  }
+
+  private handleCollisions(previousPosition: Vector3, deltaTime: number): void {
+    // Create a capsule-like collision check around the kart
+    const kartPosition = this.config.character.position;
+    const kartBounds = this.kartBounds;
+
+    // Check for collisions using multiple raycasts around the kart perimeter
+    const collisionChecks = this.performCollisionChecks(kartPosition, kartBounds);
+
+    if (collisionChecks.length > 0) {
+      // Handle the collision response
+      this.applyCollisionResponse(collisionChecks, previousPosition, deltaTime);
+    }
+  }
+
+  private performCollisionChecks(kartPosition: Vector3, kartBounds: any): Array<{
+    normal: Vector3;
+    distance: number;
+    point: Vector3;
+  }> {
+    const collisions: Array<{
+      normal: Vector3;
+      distance: number;
+      point: Vector3;
+    }> = [];
+
+    // Get kart's forward and right directions
+    const forward = this.config.character.getWorldDirection(new Vector3());
+    const right = new Vector3().crossVectors(forward, new Vector3(0, 1, 0)).normalize();
+
+    // Define collision check points around the kart perimeter
+    const checkPoints = [
+      // Front center
+      kartPosition.clone().add(forward.clone().multiplyScalar(kartBounds.length / 2)),
+      // Front left
+      kartPosition
+        .clone()
+        .add(forward.clone().multiplyScalar(kartBounds.length / 2))
+        .add(right.clone().multiplyScalar(-kartBounds.width / 2)),
+      // Front right
+      kartPosition
+        .clone()
+        .add(forward.clone().multiplyScalar(kartBounds.length / 2))
+        .add(right.clone().multiplyScalar(kartBounds.width / 2)),
+      // Left side
+      kartPosition.clone().add(right.clone().multiplyScalar(-kartBounds.width / 2)),
+      // Right side
+      kartPosition.clone().add(right.clone().multiplyScalar(kartBounds.width / 2)),
+      // Rear center
+      kartPosition.clone().add(forward.clone().multiplyScalar(-kartBounds.length / 2)),
+      // Rear left
+      kartPosition
+        .clone()
+        .add(forward.clone().multiplyScalar(-kartBounds.length / 2))
+        .add(right.clone().multiplyScalar(-kartBounds.width / 2)),
+      // Rear right
+      kartPosition
+        .clone()
+        .add(forward.clone().multiplyScalar(-kartBounds.length / 2))
+        .add(right.clone().multiplyScalar(kartBounds.width / 2)),
+    ];
+
+    // Check each point for collisions
+    checkPoints.forEach((checkPoint, index) => {
+      // Cast rays in multiple directions from each check point
+      const rayDirections = [
+        forward.clone(),
+        forward.clone().negate(),
+        right.clone(),
+        right.clone().negate(),
+      ];
+
+      rayDirections.forEach((direction) => {
+        this.rayCaster.set(checkPoint, direction);
+        const hit = this.config.collisionsManager.raycastFirst(
+          this.rayCaster.ray,
+          kartBounds.length / 2 + 0.1, // Small collision margin
+        );
+
+        if (hit) {
+          const [distance, normal, , point] = hit;
+          if (distance < kartBounds.length / 2 + 0.05) {
+            collisions.push({
+              normal: normal.clone(),
+              distance,
+              point: point.clone(),
+            });
+          }
+        }
+      });
+    });
+
+    return collisions;
+  }
+
+  private applyCollisionResponse(
+    collisions: Array<{ normal: Vector3; distance: number; point: Vector3 }>,
+    previousPosition: Vector3,
+    deltaTime: number,
+  ): void {
+    if (collisions.length === 0) return;
+
+    // Calculate average collision normal
+    const avgNormal = new Vector3();
+    collisions.forEach((collision) => {
+      avgNormal.add(collision.normal);
+    });
+    avgNormal.divideScalar(collisions.length).normalize();
+
+    // Calculate penetration depth
+    const minDistance = Math.min(...collisions.map((c) => c.distance));
+    const penetration = Math.max(0, this.kartBounds.length / 2 - minDistance + 0.05);
+
+    // Position correction - push kart out of collision
+    if (penetration > 0.001) {
+      this.config.character.position.add(avgNormal.clone().multiplyScalar(penetration));
+    }
+
+    // Velocity response - bounce and friction
+    this.handleVelocityCollisionResponse(avgNormal, penetration);
+  }
+
+  private handleVelocityCollisionResponse(normal: Vector3, penetration: number): void {
+    const speed = this.velocity.length();
+
+    if (speed < 0.1) return; // Skip if barely moving
+
+    // Separate velocity into normal and tangential components
+    const velocityNormal = this.velocity.clone().projectOnVector(normal);
+    const velocityTangent = this.velocity.clone().sub(velocityNormal);
+
+    // Apply bounce to normal component
+    const bounceVelocity = velocityNormal.clone().multiplyScalar(-this.kartConfig.bounceRestitution);
+
+    // Apply friction to tangential component
+    const frictionFactor = 0.7; // Reduce sliding along walls
+    const frictionVelocity = velocityTangent.clone().multiplyScalar(frictionFactor);
+
+    // Combine bounce and friction
+    this.velocity.copy(bounceVelocity.add(frictionVelocity));
+
+    // Limit bounce velocity to prevent excessive forces
+    const maxBounceSpeed = this.kartConfig.maxSpeed * 0.8;
+    if (this.velocity.length() > maxBounceSpeed) {
+      this.velocity.normalize().multiplyScalar(maxBounceSpeed);
+    }
+
+    // Add some rotational effect from the collision
+    const impactForce = Math.min(speed / this.kartConfig.maxSpeed, 1);
+    const rotationalImpulse = impactForce * 0.5; // Moderate spin from collision
+
+    // Determine spin direction based on collision angle
+    const forward = this.config.character.getWorldDirection(new Vector3());
+    const collisionAngle = normal.dot(forward);
+
+    if (Math.abs(collisionAngle) < 0.7) {
+      // Side collision
+      const spinDirection = normal.clone().cross(new Vector3(0, 1, 0)).dot(forward);
+      this.angularVelocity += spinDirection * rotationalImpulse;
+    }
   }
 
   private maintainGroundContact(): void {
