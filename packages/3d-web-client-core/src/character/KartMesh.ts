@@ -150,13 +150,13 @@ export class KartMesh extends Group {
     // Only animate programmatic wheels, not GLB model wheels
     if (this.loadedModel || this.wheels.length === 0) return;
 
-    // Rotate all wheels based on forward movement
+    // Rotate all wheels based on forward movement (can be negative for reverse)
     // Use wheel circumference for realistic rotation speed
     const wheelCircumference = 2 * Math.PI * this.wheelRadius;
     const wheelRotation = ((forwardSpeed * deltaTime) / wheelCircumference) * 2 * Math.PI;
 
     this.wheels.forEach((wheel) => {
-      wheel.rotation.x += wheelRotation; // X-axis rotation for wheels lying flat
+      wheel.rotation.x += wheelRotation; // X-axis rotation for wheels lying flat (negative speed = reverse rotation)
     });
 
     // Apply steering to front wheels only

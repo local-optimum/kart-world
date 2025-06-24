@@ -149,9 +149,11 @@ export class KartController {
       inputSmoothRate * this.config.timeManager.deltaTime,
     );
 
+    // Realistic steering: invert when reversing (front wheels control direction, but moving backward)
+    const effectiveSteering = this.isReversing ? -input.steering : input.steering;
     this.steeringInput = this.smoothInput(
       this.steeringInput,
-      input.steering,
+      effectiveSteering,
       steeringSmoothRate * this.config.timeManager.deltaTime,
     );
 
