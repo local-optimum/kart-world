@@ -42,13 +42,13 @@ export class KartController {
   public networkState: CharacterState;
 
   private kartConfig: KartPhysicsConfig = {
-    maxSpeed: 200, // Reduced for smaller environments - still fast but manageable
+    maxSpeed: 120, // Reduced from 200 for better balance
     acceleration: 70,
     deceleration: 70,
-    steeringSpeed: 1.8, // Reduced from 2.5 for slower, more controlled turning
+    steeringSpeed: 1.8,
     driftFactor: 0.4,
-    groundFriction: 0.95, // Reduced friction for better speed maintenance
-    airResistance: 0.008, // Reduced air resistance for higher top speeds
+    groundFriction: 0.95,
+    airResistance: 0.008,
     bounceRestitution: 0.6,
   };
 
@@ -59,6 +59,7 @@ export class KartController {
   private throttleInput: number = 0;
   private steeringInput: number = 0;
   private isSkidding: boolean = false;
+  private isReversing: boolean = false; // Track reverse state
 
   private rayCaster: Raycaster = new Raycaster();
   private kartBounds = {
@@ -183,13 +184,16 @@ export class KartController {
 
     // Update visual kart animations (wheels, etc.)
     const currentSpeed = this.velocity.length();
-    this.config.character.updateKartMovement(currentSpeed, this.steeringInput, deltaTime);
+    // Pass negative speed when reversing for proper wheel animation
+    const displaySpeed = this.isReversing ? -currentSpeed : currentSpeed;
+    this.config.character.updateKartMovement(displaySpeed, this.steeringInput, deltaTime);
   }
 
   private updateLinearVelocity(deltaTime: number): void {
     if (Math.abs(this.throttleInput) > 0.01) {
       if (this.throttleInput > 0) {
         // FORWARD ACCELERATION - normal acceleration in forward direction
+        this.isReversing = false; // Exit reverse mode when going forward
         const accelerationForce = this.throttleInput * this.kartConfig.acceleration;
         const forwardDirection = this.config.character.getWorldDirection(new Vector3());
         this.velocity.add(forwardDirection.multiplyScalar(accelerationForce * deltaTime));
@@ -199,37 +203,66 @@ export class KartController {
           this.velocity.normalize().multiplyScalar(this.kartConfig.maxSpeed);
         }
       } else {
-        // SIMPLE BRAKING - speed reduction plus tiny directional friction to stop lateral slides
-        const brakingIntensity = Math.abs(this.throttleInput);
+        // REVERSE OR BRAKING - check if we should reverse or brake
         const currentSpeed = this.velocity.length();
         
-        if (currentSpeed > 0.1) {
-          // SPEED-DEPENDENT BRAKING: smoother transition, less abrupt at low speeds
-          let speedFactor;
-          if (currentSpeed < 15) {
-            speedFactor = 1.3; // Gentler 1.3x braking effectiveness at very low speeds
-          } else if (currentSpeed < 40) {
-            speedFactor = 1.1; // Slight boost at low-medium speeds
-          } else {
-            speedFactor = Math.max(0.3, 1 - currentSpeed / 100); // Normal curve for higher speeds
+        // Enter reverse mode if nearly stopped and pressing brake
+        if (currentSpeed < 2.0 && this.throttleInput < -0.1) {
+          this.isReversing = true;
+        }
+        
+        // Stay in reverse mode while holding brake/reverse input
+        if (this.isReversing && this.throttleInput < -0.1) {
+          // REVERSE ACCELERATION - move backward at full speed for cool reverse drifts
+          const reverseAcceleration = Math.abs(this.throttleInput) * this.kartConfig.acceleration; // Full acceleration, not reduced
+          const backwardDirection = this.config.character.getWorldDirection(new Vector3()).negate();
+          this.velocity.add(backwardDirection.multiplyScalar(reverseAcceleration * deltaTime));
+          
+          // Allow full reverse speed - same as forward for reverse drifts
+          if (this.velocity.length() > this.kartConfig.maxSpeed) {
+            this.velocity.normalize().multiplyScalar(this.kartConfig.maxSpeed);
           }
-          const adjustedBrakingIntensity = brakingIntensity * speedFactor;
           
-          const speedReduction = 1 - adjustedBrakingIntensity * 0.9 * deltaTime; // 50% stronger than 3x
-          const directionFriction = 1 - adjustedBrakingIntensity * 0.675 * deltaTime; // 50% stronger than 3x
+          // Debug logging
+          if (Math.random() < 0.01) { // Log occasionally to avoid spam
+            console.log("Reverse mode active - speed:", currentSpeed, "throttle:", this.throttleInput);
+          }
+        } else {
+          // BRAKING - speed reduction plus directional friction to stop lateral slides
+          this.isReversing = false; // Exit reverse mode when braking at higher speeds
+          const brakingIntensity = Math.abs(this.throttleInput);
           
-          // Apply both effects to the entire velocity vector
-          this.velocity.multiplyScalar(speedReduction * directionFriction);
-          
-          // Stop completely at very low speeds
-          if (this.velocity.length() < 0.5) {
-            this.velocity.multiplyScalar(0.9);
-            if (this.velocity.length() < 0.1) {
-              this.velocity.set(0, 0, 0);
+          if (currentSpeed > 0.1) {
+            // SPEED-DEPENDENT BRAKING: smoother transition, less abrupt at low speeds
+            let speedFactor;
+            if (currentSpeed < 15) {
+              speedFactor = 1.3; // Gentler 1.3x braking effectiveness at very low speeds
+            } else if (currentSpeed < 40) {
+              speedFactor = 1.1; // Slight boost at low-medium speeds
+            } else {
+              speedFactor = Math.max(0.3, 1 - currentSpeed / 100); // Normal curve for higher speeds
+            }
+            const adjustedBrakingIntensity = brakingIntensity * speedFactor;
+            
+            const speedReduction = 1 - adjustedBrakingIntensity * 0.9 * deltaTime; // 50% stronger than 3x
+            const directionFriction = 1 - adjustedBrakingIntensity * 0.675 * deltaTime; // 50% stronger than 3x
+            
+            // Apply both effects to the entire velocity vector
+            this.velocity.multiplyScalar(speedReduction * directionFriction);
+            
+            // Stop completely at very low speeds
+            if (this.velocity.length() < 0.5) {
+              this.velocity.multiplyScalar(0.9);
+              if (this.velocity.length() < 0.1) {
+                this.velocity.set(0, 0, 0);
+              }
             }
           }
         }
       }
+    } else {
+      // No throttle input - exit reverse mode
+      this.isReversing = false;
     }
   }
 
@@ -250,7 +283,7 @@ export class KartController {
         } else {
           // Normal speed-dependent steering for higher speeds
           const lowSpeedFactor = 1.0; // Full turning at moderate speeds
-          const highSpeedReduction = 0.3; // Much less turning at high speeds
+          const highSpeedReduction = 0.5; // Improved from 0.3 - less restrictive at high speeds
           const speedForMaxReduction = 30; // Speed at which turning is most reduced
 
           const speedRatio = Math.min(forwardSpeed / speedForMaxReduction, 1);
@@ -641,6 +674,10 @@ export class KartController {
 
   public isCreatingSkidMarks(): boolean {
     return this.isSkidding;
+  }
+
+  public isInReverse(): boolean {
+    return this.isReversing;
   }
 
   public getWheelPositions(): Vector3[] {

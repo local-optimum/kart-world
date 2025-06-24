@@ -282,7 +282,8 @@ export class CharacterManager {
       const kartPosition = this.localCharacter.position;
       const kartVelocity = this.localController.getVelocity();
       const kartRotation = this.localCharacter.rotation;
-      this.config.cameraManager.updateForKart(kartPosition, kartVelocity, kartRotation);
+      const isReversing = this.localController.isInReverse();
+      this.config.cameraManager.updateForKart(kartPosition, kartVelocity, kartRotation, isReversing);
 
       // Update skid marks based on kart state
       const isSkidding = this.localController.isCreatingSkidMarks();

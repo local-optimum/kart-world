@@ -231,7 +231,12 @@ export class CameraManager {
     this.setTarget(target);
   }
 
-  public updateForKart(kartPosition: Vector3, kartVelocity: Vector3, kartRotation: Euler): void {
+  public updateForKart(kartPosition: Vector3, kartVelocity: Vector3, kartRotation: Euler, isReversing: boolean = false): void {
+    // Debug logging
+    if (Math.random() < 0.01) { // Log occasionally to avoid spam
+      console.log("Camera updateForKart - isReversing:", isReversing);
+    }
+    
     // Disable manual camera controls when using kart camera
     this.disableManualControls();
 
@@ -263,7 +268,8 @@ export class CameraManager {
       lookAheadPosition.add(velocityDirection.multiplyScalar(lookAheadDistance));
     } else {
       // Use kart facing direction when stationary/slow
-      lookAheadPosition.add(kartForward.clone().multiplyScalar(0.5));
+      const facingDirection = isReversing ? kartForward.clone().negate() : kartForward.clone();
+      lookAheadPosition.add(facingDirection.multiplyScalar(0.5));
     }
 
     // Height offset: lower when going fast for speed sensation
@@ -274,11 +280,13 @@ export class CameraManager {
     const targetPosition = lookAheadPosition.clone();
     targetPosition.y += kartHeightOffset;
 
-    // Calculate camera position behind the kart using its forward direction
+    // Calculate camera position based on movement direction
     const kartForwardNormalized = kartForward.clone().normalize();
 
-    // Position camera behind kart (opposite to forward direction)
-    const cameraOffset = kartForwardNormalized.clone().multiplyScalar(-dynamicDistance);
+    // Position camera behind the direction of movement
+    // When reversing, position camera in front of the kart (behind the direction of movement)
+    const cameraDirection = isReversing ? kartForwardNormalized.clone() : kartForwardNormalized.clone().negate();
+    const cameraOffset = cameraDirection.multiplyScalar(dynamicDistance);
     cameraOffset.y += kartHeightOffset; // Add height offset
 
     const cameraPosition = kartPosition.clone().add(cameraOffset);
@@ -292,29 +300,41 @@ export class CameraManager {
     let theta = Math.atan2(dz, dx);
     const phi = Math.acos(dy / distance);
 
-    // ANGULAR CONSTRAINT: Prevent camera from swinging too far from behind the kart
-    const maxSwingAngle = Math.PI / 6; // 30 degrees - reasonable constraint
+    // ANGULAR CONSTRAINT: Only constrain during forward driving, allow free rotation when reversing
+    const maxSwingAngle = Math.PI / 6; // 30 degrees - reasonable constraint for normal operation
 
-    // Calculate kart's REAR direction angle (opposite of forward direction)
-    const kartRearTheta = Math.atan2(kartForward.z, kartForward.x) + Math.PI;
+    // Calculate optimal camera angle based on movement direction
+    const movementDirection = isReversing ? kartForward.clone().negate() : kartForward.clone();
+    const optimalTheta = Math.atan2(movementDirection.z, movementDirection.x) + Math.PI;
 
-    // Calculate how far the desired camera angle deviates from the kart's rear
-    let deviationFromRear = theta - kartRearTheta;
+    // Calculate how far the desired camera angle deviates from optimal
+    let deviationFromOptimal = theta - optimalTheta;
 
     // Normalize to shortest path
-    while (deviationFromRear > Math.PI) deviationFromRear -= 2 * Math.PI;
-    while (deviationFromRear < -Math.PI) deviationFromRear += 2 * Math.PI;
+    while (deviationFromOptimal > Math.PI) deviationFromOptimal -= 2 * Math.PI;
+    while (deviationFromOptimal < -Math.PI) deviationFromOptimal += 2 * Math.PI;
 
-    // Clamp deviation to prevent excessive swinging
-    deviationFromRear = Math.max(-maxSwingAngle, Math.min(maxSwingAngle, deviationFromRear));
+    // Only apply constraint when NOT reversing - allow complete freedom when reversing
+    if (!isReversing) {
+      // Forward driving - apply normal constraint to prevent excessive swinging
+      deviationFromOptimal = Math.max(-maxSwingAngle, Math.min(maxSwingAngle, deviationFromOptimal));
+      if (Math.random() < 0.01) { // Debug occasionally
+        console.log("Camera constraint APPLIED - deviation clamped to:", deviationFromOptimal);
+      }
+    } else {
+      if (Math.random() < 0.01) { // Debug occasionally
+        console.log("Camera constraint DISABLED - free rotation, deviation:", deviationFromOptimal);
+      }
+    }
+    // When reversing, no constraint - allow camera to rotate wherever it needs to go
 
-    // Apply the constraint
-    theta = kartRearTheta + deviationFromRear;
+    // Apply the constraint (or lack thereof when reversing)
+    theta = optimalTheta + deviationFromOptimal;
 
     // SMOOTH CAMERA MOVEMENTS: Use interpolation instead of direct assignment
     // This prevents jarring camera movements during acceleration/deceleration
-    // Made much more responsive to keep up with high-speed rotations
-    const cameraSmoothing = 0.6; // Much more responsive for angle transitions
+    // Made much more responsive to keep up with high-speed rotations and reverse transitions
+    const cameraSmoothing = isReversing ? 0.9 : 0.6; // Much more responsive when reversing
     const distanceSmoothing = 0.3; // More responsive distance transitions
 
     // Calculate shortest path for theta to prevent long-way-around issues
