@@ -102,6 +102,10 @@ This project uses the following third-party assets under their respective licens
   Licensed under [CC Attribution](https://creativecommons.org/licenses/by/4.0/)  
   Source: https://sketchfab.com/3d-models/stylized-tree-03-clean-d3af590a640b40ca98c2d669e83182e8
 
+- **Rooftop Night HDRI** by [Greg Zaal](https://gregzaal.com/)  
+  Licensed under [CC0 (Public Domain)](https://creativecommons.org/publicdomain/zero/1.0/)  
+  Source: https://polyhaven.com/a/rooftop_night
+
 ### Audio Assets
 - **Ferrari Enzo Sound Effect** by [AstonMartinVantageV12](https://pixabay.com/users/astonmartinvantagev12-33416013/)  
   Licensed as Free for Use  
@@ -115,4 +119,5 @@ This project uses the following third-party assets under their respective licens
 
 ### License Information
 - **CC Attribution (CC BY)**: You are free to use, share, and adapt these works for any purpose, even commercially, as long as you provide appropriate credit to the original creator.
+- **CC0 (Public Domain)**: No rights reserved. You can use, modify, and distribute these works for any purpose without restriction or attribution required.
 - **Free for Use**: These assets can be used freely without restriction.
