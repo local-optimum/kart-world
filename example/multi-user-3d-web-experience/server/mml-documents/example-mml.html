@@ -30,6 +30,136 @@
     sz="0.005"
   ></m-model>
 
+  <!-- Warning Labels - Visible when tree is present (4 rotations for 360° visibility) -->
+  <m-label
+    id="tree-warning-label-0"
+    content="DO NOT HIT THIS TREE"
+    font-size="120"
+    font-color="red"
+    alignment="center"
+    y="7"
+    width="15"
+    height="2"
+    emissive="0"
+    visible="true"
+    collide="false"
+    color="rgb(0,0,0)"
+    ry="0"
+  ></m-label>
+  
+  <m-label
+    id="tree-warning-label-90"
+    content="DO NOT HIT THIS TREE"
+    font-size="120"
+    font-color="red"
+    alignment="center"
+    y="7"
+    width="15"
+    height="2"
+    emissive="0"
+    visible="true"
+    collide="false"
+    color="rgb(0,0,0)"
+    ry="90"
+  ></m-label>
+  
+  <m-label
+    id="tree-warning-label-180"
+    content="DO NOT HIT THIS TREE"
+    font-size="120"
+    font-color="red"
+    alignment="center"
+    y="7"
+    width="15"
+    height="2"
+    emissive="0"
+    visible="true"
+    collide="false"
+    color="rgb(0,0,0)"
+    ry="180"
+  ></m-label>
+  
+  <m-label
+    id="tree-warning-label-270"
+    content="DO NOT HIT THIS TREE"
+    font-size="120"
+    font-color="red"
+    alignment="center"
+    y="7"
+    width="15"
+    height="2"
+    emissive="0"
+    visible="true"
+    collide="false"
+    color="rgb(0,0,0)"
+    ry="270"
+  ></m-label>
+
+  <!-- Despawn Labels - Visible when tree is gone (4 rotations for 360° visibility) -->
+  <m-label
+    id="tree-despawn-label-0"
+    content="NOOO YOU CLIMATE CHANGED!!"
+    font-size="100"
+    font-color="#FF6600"
+    alignment="center"
+    y="3"
+    width="18"
+    height="1.5"
+    emissive="0.5"
+    color="rgb(0,0,0)"
+    visible="false"
+    collide="false"
+    ry="0"
+  ></m-label>
+  
+  <m-label
+    id="tree-despawn-label-90"
+    content="NOOO YOU CLIMATE CHANGED!!"
+    font-size="100"
+    font-color="#FF6600"
+    alignment="center"
+    y="3"
+    width="18"
+    height="1.5"
+    emissive="0.5"
+    color="rgb(0,0,0)"
+    visible="false"
+    collide="false"
+    ry="90"
+  ></m-label>
+  
+  <m-label
+    id="tree-despawn-label-180"
+    content="NOOO YOU CLIMATE CHANGED!!"
+    font-size="100"
+    font-color="#FF6600"
+    alignment="center"
+    y="3"
+    width="18"
+    height="1.5"
+    emissive="0.5"
+    color="rgb(0,0,0)"
+    visible="false"
+    collide="false"
+    ry="180"
+  ></m-label>
+  
+  <m-label
+    id="tree-despawn-label-270"
+    content="NOOO YOU CLIMATE CHANGED!!"
+    font-size="100"
+    font-color="#FF6600"
+    alignment="center"
+    y="3"
+    width="18"
+    height="1.5"
+    emissive="0.5"
+    color="rgb(0,0,0)"
+    visible="false"
+    collide="false"
+    ry="270"
+  ></m-label>
+
   <!-- Position probe for detection -->
   <m-position-probe 
     id="tree-probe" 
@@ -45,6 +175,23 @@
   const treeGroup = document.getElementById("tree-group");
   const cartoonTree = document.getElementById("cartoon-tree");
   const treeProbe = document.getElementById("tree-probe");
+  
+  // Get all warning label variants (4 rotations)
+  const warningLabels = [
+    document.getElementById("tree-warning-label-0"),
+    document.getElementById("tree-warning-label-90"),
+    document.getElementById("tree-warning-label-180"),
+    document.getElementById("tree-warning-label-270")
+  ];
+  
+  // Get all despawn label variants (4 rotations)
+  const despawnLabels = [
+    document.getElementById("tree-despawn-label-0"),
+    document.getElementById("tree-despawn-label-90"),
+    document.getElementById("tree-despawn-label-180"),
+    document.getElementById("tree-despawn-label-270")
+  ];
+  
   let treeCollected = false;
 
   function getHexForCurrentTime(lightness) {
@@ -86,6 +233,10 @@
     };
     treeModel.removeAttribute("src"); // This removes the 3D model completely
 
+    // Hide all warning labels and show all despawn labels
+    warningLabels.forEach(label => label.setAttribute("visible", "false"));
+    despawnLabels.forEach(label => label.setAttribute("visible", "true"));
+
     // Respawn tree after 3 seconds
     setTimeout(() => {
       console.log("Tree respawning...");
@@ -96,6 +247,10 @@
       treeModel.setAttribute("sx", originalModelScale.sx);
       treeModel.setAttribute("sy", originalModelScale.sy);
       treeModel.setAttribute("sz", originalModelScale.sz);
+
+      // Show all warning labels and hide all despawn labels
+      warningLabels.forEach(label => label.setAttribute("visible", "true"));
+      despawnLabels.forEach(label => label.setAttribute("visible", "false"));
     }, 3000);
   });
 

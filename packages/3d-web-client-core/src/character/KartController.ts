@@ -497,7 +497,11 @@ export class KartController {
 
         if (hit) {
           const [distance, normal, , point] = hit;
-          if (distance < kartBounds.length / 2 + 0.05) {
+          // Add height constraint: only process collisions within reasonable height range of kart
+          const heightDifference = Math.abs(point.y - kartPosition.y);
+          const maxCollisionHeight = kartBounds.height + 2; // Kart height + 2 meters tolerance
+          
+          if (distance < kartBounds.length / 2 + 0.05 && heightDifference <= maxCollisionHeight) {
             collisions.push({
               normal: normal.clone(),
               distance,
