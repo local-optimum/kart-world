@@ -16,242 +16,359 @@
   collision-interval="100"
 ></m-model>
 
-<!-- Collectible Cartoon Tree -->
-<m-group id="tree-group" x="0" y="1.5" z="5">
-  <!-- 3D Tree Model -->
+<!-- Multiple Climate Trees -->
+<!-- Tree 1 -->
+<m-group id="tree-group-1" x="8" y="1.5" z="12">
   <m-model 
-    id="cartoon-tree"
+    id="cartoon-tree-1"
     src="https://mmlstorage.com/b58aebd0e8e13fee1d5e99012ee1ed53bbf2e40631a90a1353317b2be12c7d9a" 
-    x="0" 
-    y="-2"
-    z="0" 
-    sx="0.005" 
-    sy="0.005" 
-    sz="0.005"
+    x="0" y="-2" z="0" sx="0.005" sy="0.005" sz="0.005"
   ></m-model>
 
-  <!-- Warning Labels - Visible when tree is present (4 rotations for 360° visibility) -->
-  <m-label
-    id="tree-warning-label-0"
-    content="DO NOT HIT THIS TREE"
-    font-size="120"
-    font-color="red"
-    alignment="center"
-    y="7"
-    width="15"
-    height="2"
-    emissive="0"
-    visible="true"
-    collide="false"
-    color="rgb(0,0,0)"
-    ry="0"
-  ></m-label>
-  
-  <m-label
-    id="tree-warning-label-90"
-    content="DO NOT HIT THIS TREE"
-    font-size="120"
-    font-color="red"
-    alignment="center"
-    y="7"
-    width="15"
-    height="2"
-    emissive="0"
-    visible="true"
-    collide="false"
-    color="rgb(0,0,0)"
-    ry="90"
-  ></m-label>
-  
-  <m-label
-    id="tree-warning-label-180"
-    content="DO NOT HIT THIS TREE"
-    font-size="120"
-    font-color="red"
-    alignment="center"
-    y="7"
-    width="15"
-    height="2"
-    emissive="0"
-    visible="true"
-    collide="false"
-    color="rgb(0,0,0)"
-    ry="180"
-  ></m-label>
-  
-  <m-label
-    id="tree-warning-label-270"
-    content="DO NOT HIT THIS TREE"
-    font-size="120"
-    font-color="red"
-    alignment="center"
-    y="7"
-    width="15"
-    height="2"
-    emissive="0"
-    visible="true"
-    collide="false"
-    color="rgb(0,0,0)"
-    ry="270"
-  ></m-label>
+  <!-- Warning Labels -->
+  <m-label id="tree-warning-label-1-0" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="0"></m-label>
+  <m-label id="tree-warning-label-1-90" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="90"></m-label>
+  <m-label id="tree-warning-label-1-180" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="180"></m-label>
+  <m-label id="tree-warning-label-1-270" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="270"></m-label>
 
-  <!-- Despawn Labels - Visible when tree is gone (4 rotations for 360° visibility) -->
-  <m-label
-    id="tree-despawn-label-0"
-    content="NOOO YOU CLIMATE CHANGED!!"
-    font-size="100"
-    font-color="#FF6600"
-    alignment="center"
-    y="3"
-    width="18"
-    height="1.5"
-    emissive="0.5"
-    color="rgb(0,0,0)"
-    visible="false"
-    collide="false"
-    ry="0"
-  ></m-label>
-  
-  <m-label
-    id="tree-despawn-label-90"
-    content="NOOO YOU CLIMATE CHANGED!!"
-    font-size="100"
-    font-color="#FF6600"
-    alignment="center"
-    y="3"
-    width="18"
-    height="1.5"
-    emissive="0.5"
-    color="rgb(0,0,0)"
-    visible="false"
-    collide="false"
-    ry="90"
-  ></m-label>
-  
-  <m-label
-    id="tree-despawn-label-180"
-    content="NOOO YOU CLIMATE CHANGED!!"
-    font-size="100"
-    font-color="#FF6600"
-    alignment="center"
-    y="3"
-    width="18"
-    height="1.5"
-    emissive="0.5"
-    color="rgb(0,0,0)"
-    visible="false"
-    collide="false"
-    ry="180"
-  ></m-label>
-  
-  <m-label
-    id="tree-despawn-label-270"
-    content="NOOO YOU CLIMATE CHANGED!!"
-    font-size="100"
-    font-color="#FF6600"
-    alignment="center"
-    y="3"
-    width="18"
-    height="1.5"
-    emissive="0.5"
-    color="rgb(0,0,0)"
-    visible="false"
-    collide="false"
-    ry="270"
-  ></m-label>
+  <!-- Despawn Labels -->
+  <m-label id="tree-despawn-label-1-0" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="0"></m-label>
+  <m-label id="tree-despawn-label-1-90" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="90"></m-label>
+  <m-label id="tree-despawn-label-1-180" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="180"></m-label>
+  <m-label id="tree-despawn-label-1-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
-  <!-- Position probe for detection -->
-  <m-position-probe 
-    id="tree-probe" 
-    range="5" 
-    interval="100"
-    debug="false"
-  ></m-position-probe>
+  <m-position-probe id="tree-probe-1" range="5" interval="100" debug="false"></m-position-probe>
 </m-group>
+
+<!-- Tree 2 -->
+<m-group id="tree-group-2" x="-15" y="1.5" z="-8">
+  <m-model 
+    id="cartoon-tree-2"
+    src="https://mmlstorage.com/b58aebd0e8e13fee1d5e99012ee1ed53bbf2e40631a90a1353317b2be12c7d9a" 
+    x="0" y="-2" z="0" sx="0.005" sy="0.005" sz="0.005"
+  ></m-model>
+
+  <!-- Warning Labels -->
+  <m-label id="tree-warning-label-2-0" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="0"></m-label>
+  <m-label id="tree-warning-label-2-90" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="90"></m-label>
+  <m-label id="tree-warning-label-2-180" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="180"></m-label>
+  <m-label id="tree-warning-label-2-270" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="270"></m-label>
+
+  <!-- Despawn Labels -->
+  <m-label id="tree-despawn-label-2-0" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="0"></m-label>
+  <m-label id="tree-despawn-label-2-90" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="90"></m-label>
+  <m-label id="tree-despawn-label-2-180" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="180"></m-label>
+  <m-label id="tree-despawn-label-2-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
+
+  <m-position-probe id="tree-probe-2" range="5" interval="100" debug="false"></m-position-probe>
+</m-group>
+
+<!-- Tree 3 -->
+<m-group id="tree-group-3" x="22" y="1.5" z="-18">
+  <m-model 
+    id="cartoon-tree-3"
+    src="https://mmlstorage.com/b58aebd0e8e13fee1d5e99012ee1ed53bbf2e40631a90a1353317b2be12c7d9a" 
+    x="0" y="-2" z="0" sx="0.005" sy="0.005" sz="0.005"
+  ></m-model>
+
+  <!-- Warning Labels -->
+  <m-label id="tree-warning-label-3-0" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="0"></m-label>
+  <m-label id="tree-warning-label-3-90" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="90"></m-label>
+  <m-label id="tree-warning-label-3-180" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="180"></m-label>
+  <m-label id="tree-warning-label-3-270" content="DO NOT HIT THIS TREE" font-size="100" font-color="red" alignment="center" y="7" width="12" height="1.5" emissive="0" visible="true" collide="false" color="rgb(0,0,0)" ry="270"></m-label>
+
+  <!-- Despawn Labels -->
+  <m-label id="tree-despawn-label-3-0" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="0"></m-label>
+  <m-label id="tree-despawn-label-3-90" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="90"></m-label>
+  <m-label id="tree-despawn-label-3-180" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="180"></m-label>
+  <m-label id="tree-despawn-label-3-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
+
+  <m-position-probe id="tree-probe-3" range="5" interval="100" debug="false"></m-position-probe>
+</m-group>
+
+<!-- Map-wide position probe for tracking all players -->
+<m-position-probe 
+  id="player-tracker" 
+  range="1000" 
+  interval="16"
+  debug="false"
+  x="0"
+  y="0"
+  z="0"
+></m-position-probe>
+
+<!-- Container for dynamic player labels -->
+<m-group id="player-labels-container"></m-group>
+
+
 
 
 
 <script>
-  const treeGroup = document.getElementById("tree-group");
-  const cartoonTree = document.getElementById("cartoon-tree");
-  const treeProbe = document.getElementById("tree-probe");
-  
-  // Get all warning label variants (4 rotations)
-  const warningLabels = [
-    document.getElementById("tree-warning-label-0"),
-    document.getElementById("tree-warning-label-90"),
-    document.getElementById("tree-warning-label-180"),
-    document.getElementById("tree-warning-label-270")
+  // Multiple tree system
+  const trees = [
+    {
+      id: 1,
+      group: document.getElementById("tree-group-1"),
+      model: document.getElementById("cartoon-tree-1"),
+      probe: document.getElementById("tree-probe-1"),
+      warningLabels: [
+        document.getElementById("tree-warning-label-1-0"),
+        document.getElementById("tree-warning-label-1-90"),
+        document.getElementById("tree-warning-label-1-180"),
+        document.getElementById("tree-warning-label-1-270")
+      ],
+      despawnLabels: [
+        document.getElementById("tree-despawn-label-1-0"),
+        document.getElementById("tree-despawn-label-1-90"),
+        document.getElementById("tree-despawn-label-1-180"),
+        document.getElementById("tree-despawn-label-1-270")
+      ],
+      collected: false,
+      hitBy: null
+    },
+    {
+      id: 2,
+      group: document.getElementById("tree-group-2"),
+      model: document.getElementById("cartoon-tree-2"),
+      probe: document.getElementById("tree-probe-2"),
+      warningLabels: [
+        document.getElementById("tree-warning-label-2-0"),
+        document.getElementById("tree-warning-label-2-90"),
+        document.getElementById("tree-warning-label-2-180"),
+        document.getElementById("tree-warning-label-2-270")
+      ],
+      despawnLabels: [
+        document.getElementById("tree-despawn-label-2-0"),
+        document.getElementById("tree-despawn-label-2-90"),
+        document.getElementById("tree-despawn-label-2-180"),
+        document.getElementById("tree-despawn-label-2-270")
+      ],
+      collected: false,
+      hitBy: null
+    },
+    {
+      id: 3,
+      group: document.getElementById("tree-group-3"),
+      model: document.getElementById("cartoon-tree-3"),
+      probe: document.getElementById("tree-probe-3"),
+      warningLabels: [
+        document.getElementById("tree-warning-label-3-0"),
+        document.getElementById("tree-warning-label-3-90"),
+        document.getElementById("tree-warning-label-3-180"),
+        document.getElementById("tree-warning-label-3-270")
+      ],
+      despawnLabels: [
+        document.getElementById("tree-despawn-label-3-0"),
+        document.getElementById("tree-despawn-label-3-90"),
+        document.getElementById("tree-despawn-label-3-180"),
+        document.getElementById("tree-despawn-label-3-270")
+      ],
+      collected: false,
+      hitBy: null
+    }
   ];
-  
-  // Get all despawn label variants (4 rotations)
-  const despawnLabels = [
-    document.getElementById("tree-despawn-label-0"),
-    document.getElementById("tree-despawn-label-90"),
-    document.getElementById("tree-despawn-label-180"),
-    document.getElementById("tree-despawn-label-270")
-  ];
-  
-  let treeCollected = false;
 
-  function getHexForCurrentTime(lightness) {
-    const hue = ((Date.now() % 2000)/2000) * 360;
-    const saturation = 1.0;
-    const alpha = saturation * Math.min(lightness, 1 - lightness);
-    const getF = number => {
-      const k = (number + hue / 30) % 12;
-      return lightness - alpha * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)))
+  const playerTracker = document.getElementById("player-tracker");
+  const labelsContainer = document.getElementById("player-labels-container");
+  
+  // Player label management - integrated with tree system
+  const connectedUsers = new Map(); // connectionId -> user object
+  const guiltyPlayers = new Set(); // players who have hit trees and should show labels
+  const playerShameTimers = new Map(); // connectionId -> timeout ID for clearing shame labels
+  const labelColors = ["red", "blue", "green", "yellow", "purple", "orange", "pink", "cyan"];
+
+  // Tree collision handling for multiple trees
+  function handleTreeHit(tree, connectionId) {
+    if (tree.collected) return; // Prevent multiple collections
+    
+    tree.collected = true;
+    tree.hitBy = connectionId;
+    console.log(`Tree ${tree.id} hit by player:`, connectionId);
+    
+    // Add player to guilty list (will show floating labels)
+    guiltyPlayers.add(connectionId);
+    
+    // Clear any existing shame timer for this player and start a new one
+    if (playerShameTimers.has(connectionId)) {
+      clearTimeout(playerShameTimers.get(connectionId));
+    }
+    
+    // Start new shame timer - labels will disappear 10 seconds after LAST tree hit
+    const shameTimerId = setTimeout(() => {
+      console.log(`Clearing shame labels for player: ${connectionId}`);
+      guiltyPlayers.delete(connectionId);
+      if (connectedUsers.has(connectionId)) {
+        clearUser(connectionId);
+      }
+      playerShameTimers.delete(connectionId);
+    }, 10000);
+    
+    playerShameTimers.set(connectionId, shameTimerId);
+    
+    // Remove the tree model
+    const originalModelSrc = tree.model.getAttribute("src");
+    const originalModelScale = {
+      sx: tree.model.getAttribute("sx"),
+      sy: tree.model.getAttribute("sy"),
+      sz: tree.model.getAttribute("sz")
     };
-    const red = Math.round(255 * getF(0));
-    const green = Math.round(255 * getF(8));
-    const blue = Math.round(255 * getF(4));
-    const hex = "#"+(red.toString(16).padStart(2, "0"))+(green.toString(16).padStart(2, "0"))+(blue.toString(16).padStart(2, "0"));
-    return hex;
+    tree.model.removeAttribute("src");
+
+    // Hide warning labels and show despawn labels
+    tree.warningLabels.forEach(label => label.setAttribute("visible", "false"));
+    tree.despawnLabels.forEach(label => label.setAttribute("visible", "true"));
+
+    // Respawn tree after 10 seconds
+    setTimeout(() => {
+      console.log(`Tree ${tree.id} respawning...`);
+      
+      tree.collected = false;
+      tree.hitBy = null;
+      
+      // Restore the tree model
+      tree.model.setAttribute("src", originalModelSrc);
+      tree.model.setAttribute("sx", originalModelScale.sx);
+      tree.model.setAttribute("sy", originalModelScale.sy);
+      tree.model.setAttribute("sz", originalModelScale.sz);
+
+      // Show warning labels and hide despawn labels
+      tree.warningLabels.forEach(label => label.setAttribute("visible", "true"));
+      tree.despawnLabels.forEach(label => label.setAttribute("visible", "false"));
+    }, 10000);
   }
 
-  // Handle tree collection using position probe
-  treeProbe.addEventListener("positionenter", (event) => {
-    if (treeCollected) return; // Prevent multiple collections
+  // Set up event listeners for all trees
+  trees.forEach(tree => {
+    tree.probe.addEventListener("positionenter", (event) => {
+      handleTreeHit(tree, event.detail.connectionId);
+    });
+  });
+
+  // Player label management - only for guilty players
+  function getOrCreateUser(connectionId, position, rotation) {
+    // Only create labels for guilty players (who have hit trees)
+    if (!guiltyPlayers.has(connectionId)) return null;
     
-    treeCollected = true;
-    console.log("Tree collected! User:", event.detail.connectionId);
+    const user = connectedUsers.get(connectionId);
+    if (user) {
+      user.position = position;
+      user.rotation = rotation;
+      return user;
+    }
     
-    // Get tree's current position dynamically
-    const treePosition = {
-      x: parseFloat(treeGroup.getAttribute("x") || "0"),
-      y: parseFloat(treeGroup.getAttribute("y") || "0"),
-      z: parseFloat(treeGroup.getAttribute("z") || "0")
+    // Create first label element (0 degrees) - "CLIMATE DESTROYER" label
+    const userLabel1 = document.createElement("m-label");
+    userLabel1.setAttribute("content", "CLIMATE CHANGER");
+    userLabel1.setAttribute("font-size", "60");
+    userLabel1.setAttribute("font-color", "red");
+    userLabel1.setAttribute("alignment", "center");
+    userLabel1.setAttribute("width", "6");
+    userLabel1.setAttribute("height", "1");
+    userLabel1.setAttribute("collide", "false");
+    userLabel1.setAttribute("visible", "true");
+    userLabel1.setAttribute("emissive", "0.5");
+    userLabel1.setAttribute("color", "rgb(0,0,0)");
+    userLabel1.setAttribute("ry", "0");
+    
+    // Add smooth animation to first label
+    const attributeLerp1 = document.createElement("m-attr-lerp");
+    attributeLerp1.setAttribute("attr", "all");
+    attributeLerp1.setAttribute("duration", "100");
+    userLabel1.appendChild(attributeLerp1);
+    
+    // Create second label element (180 degrees rotated)
+    const userLabel2 = document.createElement("m-label");
+    userLabel2.setAttribute("content", "CLIMATE CHANGER");
+    userLabel2.setAttribute("font-size", "60");
+    userLabel2.setAttribute("font-color", "red");
+    userLabel2.setAttribute("alignment", "center");
+    userLabel2.setAttribute("width", "6");
+    userLabel2.setAttribute("height", "1");
+    userLabel2.setAttribute("collide", "false");
+    userLabel2.setAttribute("visible", "true");
+    userLabel2.setAttribute("emissive", "0.5");
+    userLabel2.setAttribute("color", "rgb(0,0,0)");
+    userLabel2.setAttribute("ry", "180");
+    
+    // Add smooth animation to second label
+    const attributeLerp2 = document.createElement("m-attr-lerp");
+    attributeLerp2.setAttribute("attr", "all");
+    attributeLerp2.setAttribute("duration", "100");
+    userLabel2.appendChild(attributeLerp2);
+    
+    labelsContainer.appendChild(userLabel1);
+    labelsContainer.appendChild(userLabel2);
+    
+    const newUser = {
+      label1: userLabel1,
+      label2: userLabel2,
+      position,
+      rotation,
     };
+    connectedUsers.set(connectionId, newUser);
+    return newUser;
+  }
+  
+  function clearUser(connectionId) {
+    const user = connectedUsers.get(connectionId);
+    if (!user) return;
+    user.label1.remove();
+    user.label2.remove();
+    connectedUsers.delete(connectionId);
+  }
+  
+  function setLabelPosition(connectionId, position, rotation) {
+    // Only show labels for guilty players
+    if (!guiltyPlayers.has(connectionId)) return;
     
-    // Remove the tree completely to prevent collision
-    const treeModel = treeGroup.querySelector("m-model");
-    const originalModelSrc = treeModel.getAttribute("src");
-    const originalModelScale = {
-      sx: treeModel.getAttribute("sx"),
-      sy: treeModel.getAttribute("sy"),
-      sz: treeModel.getAttribute("sz")
-    };
-    treeModel.removeAttribute("src"); // This removes the 3D model completely
+    const user = getOrCreateUser(connectionId, position, rotation);
+    if (!user) return;
+    
+    // Position both labels at the same location
+    user.label1.setAttribute("x", position.x);
+    user.label1.setAttribute("y", position.y + 2); // 2 meters above player
+    user.label1.setAttribute("z", position.z);
+    
+    user.label2.setAttribute("x", position.x);
+    user.label2.setAttribute("y", position.y + 2); // 2 meters above player
+    user.label2.setAttribute("z", position.z);
+  }
 
-    // Hide all warning labels and show all despawn labels
-    warningLabels.forEach(label => label.setAttribute("visible", "false"));
-    despawnLabels.forEach(label => label.setAttribute("visible", "true"));
+  // Player tracking event listeners - improved implementation
+  window.addEventListener("disconnected", (event) => {
+    const { connectionId } = event.detail;
+    
+    // Clear shame timer if it exists
+    if (playerShameTimers.has(connectionId)) {
+      clearTimeout(playerShameTimers.get(connectionId));
+      playerShameTimers.delete(connectionId);
+    }
+    
+    guiltyPlayers.delete(connectionId);
+    clearUser(connectionId);
+  });
 
-    // Respawn tree after 3 seconds
-    setTimeout(() => {
-      console.log("Tree respawning...");
-      treeCollected = false; // Reset collection state
-      
-      // Restore the tree model completely
-      treeModel.setAttribute("src", originalModelSrc);
-      treeModel.setAttribute("sx", originalModelScale.sx);
-      treeModel.setAttribute("sy", originalModelScale.sy);
-      treeModel.setAttribute("sz", originalModelScale.sz);
+  playerTracker.addEventListener("positionenter", (event) => {
+    const { connectionId, elementRelative, documentRelative } = event.detail;
+    console.log("Player entered tracking area:", connectionId);
+    setLabelPosition(connectionId, elementRelative.position, elementRelative.rotation);
+  });
 
-      // Show all warning labels and hide all despawn labels
-      warningLabels.forEach(label => label.setAttribute("visible", "true"));
-      despawnLabels.forEach(label => label.setAttribute("visible", "false"));
-    }, 3000);
+  playerTracker.addEventListener("positionmove", (event) => {
+    const { connectionId, elementRelative, documentRelative } = event.detail;
+    /*
+       It's possible to receive an update without an explicit enter event if this user is already in the range of
+       this element when the document is reloaded. In this case, we need to create the user as if this is an
+       enter event.
+      */
+    setLabelPosition(connectionId, elementRelative.position, elementRelative.rotation);
+  });
+
+  playerTracker.addEventListener("positionleave", (event) => {
+    const { connectionId } = event.detail;
+    console.log("Player left tracking area:", connectionId);
+    clearUser(connectionId);
   });
 
   // Debug elements removed for clean racing environment
