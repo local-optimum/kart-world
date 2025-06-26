@@ -84,3 +84,35 @@ npm run iterate
 - [`example/web-avatar-editor`](./example/web-avatar-editor)
   - Once the server is running (see [above](#running-examples--iterating-locally)), open `http://localhost:8082`.
   - An avatar editor that uses the `@mml-io/3d-web-standalone-avatar-editor` to create and edit MML avatars and a simple Express server that hosts the editor.
+
+## Credits & Attribution
+
+This project uses the following third-party assets under their respective licenses:
+
+### 3D Models
+- **Go Kart** by [Samuel Thomas](https://sketchfab.com/Samuel_Thomas)  
+  Licensed under [CC Attribution](https://creativecommons.org/licenses/by/4.0/)  
+  Source: https://sketchfab.com/3d-models/go-kart-2338810f0b1e444bace9bd7796b8c9e4
+
+- **NFS Drift Map** by [Tirarex](https://sketchfab.com/Tirarex)  
+  Licensed under [CC Attribution](https://creativecommons.org/licenses/by/4.0/)  
+  Source: https://sketchfab.com/3d-models/nfs-drift-95509e22511e412eb715a4c108d1fc76
+
+- **Stylized Tree 03 Clean** by [Clayton Creative](https://sketchfab.com/claytoncreative)  
+  Licensed under [CC Attribution](https://creativecommons.org/licenses/by/4.0/)  
+  Source: https://sketchfab.com/3d-models/stylized-tree-03-clean-d3af590a640b40ca98c2d669e83182e8
+
+### Audio Assets
+- **Ferrari Enzo Sound Effect** by [AstonMartinVantageV12](https://pixabay.com/users/astonmartinvantagev12-33416013/)  
+  Licensed as Free for Use  
+  Source: https://pixabay.com/sound-effects/ferrari-enzo-sound-effect-360529/
+
+- **New Roads Music** by [Vineemusic](https://pixabay.com/users/vineethkumar-28582768/)  
+  Licensed as Free for Use  
+  Source: https://pixabay.com/music/dance-new-roads-129667/
+
+---
+
+### License Information
+- **CC Attribution (CC BY)**: You are free to use, share, and adapt these works for any purpose, even commercially, as long as you provide appropriate credit to the original creator.
+- **Free for Use**: These assets can be used freely without restriction.
