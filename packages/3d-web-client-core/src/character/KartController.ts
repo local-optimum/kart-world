@@ -207,33 +207,39 @@ export class KartController {
       } else {
         // REVERSE OR BRAKING - check if we should reverse or brake
         const currentSpeed = this.velocity.length();
-        
+
         // Enter reverse mode if nearly stopped and pressing brake
         if (currentSpeed < 2.0 && this.throttleInput < -0.1) {
           this.isReversing = true;
         }
-        
+
         // Stay in reverse mode while holding brake/reverse input
         if (this.isReversing && this.throttleInput < -0.1) {
           // REVERSE ACCELERATION - move backward at full speed for cool reverse drifts
           const reverseAcceleration = Math.abs(this.throttleInput) * this.kartConfig.acceleration; // Full acceleration, not reduced
           const backwardDirection = this.config.character.getWorldDirection(new Vector3()).negate();
           this.velocity.add(backwardDirection.multiplyScalar(reverseAcceleration * deltaTime));
-          
+
           // Allow full reverse speed - same as forward for reverse drifts
           if (this.velocity.length() > this.kartConfig.maxSpeed) {
             this.velocity.normalize().multiplyScalar(this.kartConfig.maxSpeed);
           }
-          
+
           // Debug logging
-          if (Math.random() < 0.01) { // Log occasionally to avoid spam
-            console.log("Reverse mode active - speed:", currentSpeed, "throttle:", this.throttleInput);
+          if (Math.random() < 0.01) {
+            // Log occasionally to avoid spam
+            console.log(
+              "Reverse mode active - speed:",
+              currentSpeed,
+              "throttle:",
+              this.throttleInput,
+            );
           }
         } else {
           // BRAKING - speed reduction plus directional friction to stop lateral slides
           this.isReversing = false; // Exit reverse mode when braking at higher speeds
           const brakingIntensity = Math.abs(this.throttleInput);
-          
+
           if (currentSpeed > 0.1) {
             // SPEED-DEPENDENT BRAKING: smoother transition, less abrupt at low speeds
             let speedFactor;
@@ -245,13 +251,13 @@ export class KartController {
               speedFactor = Math.max(0.3, 1 - currentSpeed / 100); // Normal curve for higher speeds
             }
             const adjustedBrakingIntensity = brakingIntensity * speedFactor;
-            
+
             const speedReduction = 1 - adjustedBrakingIntensity * 0.9 * deltaTime; // 50% stronger than 3x
             const directionFriction = 1 - adjustedBrakingIntensity * 0.675 * deltaTime; // 50% stronger than 3x
-            
+
             // Apply both effects to the entire velocity vector
             this.velocity.multiplyScalar(speedReduction * directionFriction);
-            
+
             // Stop completely at very low speeds
             if (this.velocity.length() < 0.5) {
               this.velocity.multiplyScalar(0.9);
@@ -289,11 +295,13 @@ export class KartController {
           const speedForMaxReduction = 30; // Speed at which turning is most reduced
 
           const speedRatio = Math.min(forwardSpeed / speedForMaxReduction, 1);
-          steeringEffectiveness = lowSpeedFactor - speedRatio * (lowSpeedFactor - highSpeedReduction);
+          steeringEffectiveness =
+            lowSpeedFactor - speedRatio * (lowSpeedFactor - highSpeedReduction);
         }
 
         // Apply steering relative to current facing direction
-        const steeringForce = this.steeringInput * steeringEffectiveness * this.kartConfig.steeringSpeed * 2;
+        const steeringForce =
+          this.steeringInput * steeringEffectiveness * this.kartConfig.steeringSpeed * 2;
         this.angularVelocity += steeringForce * deltaTime;
 
         // Limit maximum angular velocity based on steering effectiveness
@@ -331,14 +339,14 @@ export class KartController {
       .multiplyScalar(-airResistance * deltaTime);
     this.velocity.add(airResistanceVector);
 
-    // Ground friction - only when driving forward (not coasting or braking)
+    // Ground friction - apply to forward and reverse movement
     if (this.isGrounded) {
       if (Math.abs(this.throttleInput) < 0.01) {
         // Coasting - minimal friction for sliding
         const coastingFriction = 0.995;
         this.velocity.multiplyScalar(coastingFriction);
-      } else if (this.throttleInput > 0 && !this.isDrifting) {
-        // Driving forward normally - apply grip
+      } else if ((this.throttleInput > 0 || this.isReversing) && !this.isDrifting) {
+        // Driving forward or reversing normally - apply grip
         this.velocity.multiplyScalar(this.kartConfig.groundFriction);
       }
       // No additional friction when braking - let it slide naturally
@@ -353,20 +361,20 @@ export class KartController {
       if (speed > 0.1) {
         // Calculate how much the velocity direction differs from where the car is pointing
         const velocityDirection = this.velocity.clone().normalize();
-        
+
         // STRONGER momentum preservation based on speed - faster = more preservation
         const speedFactor = Math.min(speed / 40, 1); // Scale with speed up to 40 units
         const baseSteeringInfluence = 0.15; // Reduced from 0.3 for more momentum preservation
         const steeringInfluence = baseSteeringInfluence * (1 - speedFactor * 0.5); // Even less at high speeds
         const momentumPreservation = 1 - steeringInfluence;
-        
+
         // Preserve most of the original momentum direction
         const preservedVelocity = velocityDirection.multiplyScalar(speed * momentumPreservation);
         // Add small steering influence based on car's forward direction
         const steeringVelocity = forward.multiplyScalar(speed * steeringInfluence);
         // Combine preserved momentum with steering influence
         this.velocity.copy(preservedVelocity.add(steeringVelocity));
-        
+
         // Apply drift-specific friction (less than normal driving)
         const driftFriction = 0.985; // Even less friction during drift for longer slides
         this.velocity.multiplyScalar(driftFriction);
