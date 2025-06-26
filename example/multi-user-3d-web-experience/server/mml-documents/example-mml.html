@@ -16,8 +16,36 @@
   collision-interval="100"
 ></m-model>
 
+<!-- Collectible Cartoon Tree -->
+<m-group id="tree-group" x="0" y="1.5" z="5">
+  <!-- 3D Tree Model -->
+  <m-model 
+    id="cartoon-tree"
+    src="https://mmlstorage.com/b58aebd0e8e13fee1d5e99012ee1ed53bbf2e40631a90a1353317b2be12c7d9a" 
+    x="0" 
+    y="-2"
+    z="0" 
+    sx="0.005" 
+    sy="0.005" 
+    sz="0.005"
+  ></m-model>
+
+  <!-- Position probe for detection -->
+  <m-position-probe 
+    id="tree-probe" 
+    range="5" 
+    interval="100"
+    debug="false"
+  ></m-position-probe>
+</m-group>
+
+
+
 <script>
-  const stairs = document.getElementById("stairs");
+  const treeGroup = document.getElementById("tree-group");
+  const cartoonTree = document.getElementById("cartoon-tree");
+  const treeProbe = document.getElementById("tree-probe");
+  let treeCollected = false;
 
   function getHexForCurrentTime(lightness) {
     const hue = ((Date.now() % 2000)/2000) * 360;
@@ -33,6 +61,43 @@
     const hex = "#"+(red.toString(16).padStart(2, "0"))+(green.toString(16).padStart(2, "0"))+(blue.toString(16).padStart(2, "0"));
     return hex;
   }
+
+  // Handle tree collection using position probe
+  treeProbe.addEventListener("positionenter", (event) => {
+    if (treeCollected) return; // Prevent multiple collections
+    
+    treeCollected = true;
+    console.log("Tree collected! User:", event.detail.connectionId);
+    
+    // Get tree's current position dynamically
+    const treePosition = {
+      x: parseFloat(treeGroup.getAttribute("x") || "0"),
+      y: parseFloat(treeGroup.getAttribute("y") || "0"),
+      z: parseFloat(treeGroup.getAttribute("z") || "0")
+    };
+    
+    // Remove the tree completely to prevent collision
+    const treeModel = treeGroup.querySelector("m-model");
+    const originalModelSrc = treeModel.getAttribute("src");
+    const originalModelScale = {
+      sx: treeModel.getAttribute("sx"),
+      sy: treeModel.getAttribute("sy"),
+      sz: treeModel.getAttribute("sz")
+    };
+    treeModel.removeAttribute("src"); // This removes the 3D model completely
+
+    // Respawn tree after 3 seconds
+    setTimeout(() => {
+      console.log("Tree respawning...");
+      treeCollected = false; // Reset collection state
+      
+      // Restore the tree model completely
+      treeModel.setAttribute("src", originalModelSrc);
+      treeModel.setAttribute("sx", originalModelScale.sx);
+      treeModel.setAttribute("sy", originalModelScale.sy);
+      treeModel.setAttribute("sz", originalModelScale.sz);
+    }, 3000);
+  });
 
   // Debug elements removed for clean racing environment
 </script>
