@@ -38,6 +38,7 @@
   <m-label id="tree-despawn-label-1-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-1" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-1" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 2 -->
@@ -61,6 +62,7 @@
   <m-label id="tree-despawn-label-2-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-2" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-2" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 3 -->
@@ -84,6 +86,7 @@
   <m-label id="tree-despawn-label-3-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-3" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-3" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 4 -->
@@ -107,6 +110,7 @@
   <m-label id="tree-despawn-label-4-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-4" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-4" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 5 -->
@@ -130,6 +134,7 @@
   <m-label id="tree-despawn-label-5-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-5" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-5" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 6 -->
@@ -153,6 +158,7 @@
   <m-label id="tree-despawn-label-6-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-6" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-6" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Tree 7 -->
@@ -176,6 +182,7 @@
   <m-label id="tree-despawn-label-7-270" content="RIP ENVIRONMENT" font-size="80" font-color="green" alignment="center" y="2" width="9" height="1" emissive="0.5" color="rgb(0,0,0)" visible="false" collide="false" ry="270"></m-label>
 
   <m-position-probe id="tree-probe-7" range="5" interval="100" debug="false"></m-position-probe>
+  <m-audio id="tree-audio-7" src="https://mmlstorage.com/be4d3efc7975d562bd0c62075b00b3f0998d1778d795e675186516d9a2804610" volume="0.8" loop="false" enabled="true"></m-audio>
 </m-group>
 
 <!-- Map-wide position probe for tracking all players -->
@@ -187,14 +194,22 @@
   x="0"
   y="0"
   z="0"
-></m-position-probe>
+>
+  <m-audio 
+    id="background-music" 
+    src="https://mmlstorage.com/c857729f82e5ade637edfebfcc23b1743f6743099c73c4eecf92d058897b6349" 
+    volume="0.6" 
+    loop="true" 
+    start-time="0"
+    enabled="true"
+  ></m-audio>
+</m-position-probe>
 
 <!-- Container for dynamic player labels -->
 <m-group id="player-labels-container"></m-group>
 
-
-
-
+<!-- Container for dynamic player car audio -->
+<m-group id="player-audio-container"></m-group>
 
 <script>
   // Multiple tree system
@@ -204,6 +219,7 @@
       group: document.getElementById("tree-group-1"),
       model: document.getElementById("cartoon-tree-1"),
       probe: document.getElementById("tree-probe-1"),
+      audio: document.getElementById("tree-audio-1"),
       warningLabels: [
         document.getElementById("tree-warning-label-1-0"),
         document.getElementById("tree-warning-label-1-90"),
@@ -224,6 +240,7 @@
       group: document.getElementById("tree-group-2"),
       model: document.getElementById("cartoon-tree-2"),
       probe: document.getElementById("tree-probe-2"),
+      audio: document.getElementById("tree-audio-2"),
       warningLabels: [
         document.getElementById("tree-warning-label-2-0"),
         document.getElementById("tree-warning-label-2-90"),
@@ -244,6 +261,7 @@
       group: document.getElementById("tree-group-3"),
       model: document.getElementById("cartoon-tree-3"),
       probe: document.getElementById("tree-probe-3"),
+      audio: document.getElementById("tree-audio-3"),
       warningLabels: [
         document.getElementById("tree-warning-label-3-0"),
         document.getElementById("tree-warning-label-3-90"),
@@ -264,6 +282,7 @@
       group: document.getElementById("tree-group-4"),
       model: document.getElementById("cartoon-tree-4"),
       probe: document.getElementById("tree-probe-4"),
+      audio: document.getElementById("tree-audio-4"),
       warningLabels: [
         document.getElementById("tree-warning-label-4-0"),
         document.getElementById("tree-warning-label-4-90"),
@@ -284,6 +303,7 @@
       group: document.getElementById("tree-group-5"),
       model: document.getElementById("cartoon-tree-5"),
       probe: document.getElementById("tree-probe-5"),
+      audio: document.getElementById("tree-audio-5"),
       warningLabels: [
         document.getElementById("tree-warning-label-5-0"),
         document.getElementById("tree-warning-label-5-90"),
@@ -304,6 +324,7 @@
       group: document.getElementById("tree-group-6"),
       model: document.getElementById("cartoon-tree-6"),
       probe: document.getElementById("tree-probe-6"),
+      audio: document.getElementById("tree-audio-6"),
       warningLabels: [
         document.getElementById("tree-warning-label-6-0"),
         document.getElementById("tree-warning-label-6-90"),
@@ -324,6 +345,7 @@
       group: document.getElementById("tree-group-7"),
       model: document.getElementById("cartoon-tree-7"),
       probe: document.getElementById("tree-probe-7"),
+      audio: document.getElementById("tree-audio-7"),
       warningLabels: [
         document.getElementById("tree-warning-label-7-0"),
         document.getElementById("tree-warning-label-7-90"),
@@ -343,8 +365,92 @@
 
   const playerTracker = document.getElementById("player-tracker");
   const labelsContainer = document.getElementById("player-labels-container");
-  
-  // Player label management - integrated with tree system
+
+  // Player audio management - for ALL players
+  const playerAudioElements = new Map(); // connectionId -> audio element
+  const audioContainer = document.getElementById("player-audio-container");
+
+  // Audio control function (similar to the restart function in your example)
+  function restartTreeAudio(audioTag) {
+    const currentTime = document.timeline.currentTime;
+    const startTime = currentTime + 50; // Start 50ms in the future
+    audioTag.setAttribute("start-time", startTime);
+    audioTag.removeAttribute("pause-time");
+    console.log(`Playing tree audio - Current time: ${currentTime}, Start time: ${startTime}`);
+  }
+
+  // Audio control function for car engines
+  function restartPlayerAudio(audioTag) {
+    const currentTime = document.timeline.currentTime;
+    const startTime = currentTime + 50; // Start 50ms in the future
+    audioTag.setAttribute("start-time", startTime);
+    audioTag.removeAttribute("pause-time");
+    console.log(`Starting car audio - Current time: ${currentTime}, Start time: ${startTime}`);
+  }
+
+  function stopPlayerAudio(audioTag) {
+    const currentTime = document.timeline.currentTime;
+    audioTag.setAttribute("pause-time", currentTime);
+    audioTag.removeAttribute("start-time");
+    console.log(`Stopping car audio at time: ${currentTime}`);
+  }
+
+  // Create or get audio element for a player
+  function getOrCreatePlayerAudio(connectionId, position) {
+    let audioElement = playerAudioElements.get(connectionId);
+    if (audioElement) {
+      // Update position
+      audioElement.setAttribute("x", position.x);
+      audioElement.setAttribute("y", position.y);
+      audioElement.setAttribute("z", position.z);
+      return audioElement;
+    }
+    
+    // Create new audio element for this player
+    audioElement = document.createElement("m-audio");
+    audioElement.setAttribute("id", `player-car-audio-${connectionId}`);
+    audioElement.setAttribute("src", "https://mmlstorage.com/e3a462277515e3d82c004b1def5387f564bbc5f744ac831ae97e0c45fdcd57a4");
+    audioElement.setAttribute("volume", "0.4"); // Lower volume than tree audio
+    audioElement.setAttribute("loop", "true");
+    audioElement.setAttribute("enabled", "true");
+    
+    // Set initial position
+    audioElement.setAttribute("x", position.x);
+    audioElement.setAttribute("y", position.y);
+    audioElement.setAttribute("z", position.z);
+    
+    // Add position smoothing
+    const attributeLerp = document.createElement("m-attr-lerp");
+    attributeLerp.setAttribute("attr", "all");
+    attributeLerp.setAttribute("duration", "100");
+    audioElement.appendChild(attributeLerp);
+    
+    audioContainer.appendChild(audioElement);
+    playerAudioElements.set(connectionId, audioElement);
+    
+    // Start the audio
+    restartPlayerAudio(audioElement);
+    
+    console.log(`Created car audio for player: ${connectionId}`);
+    return audioElement;
+  }
+
+  function clearPlayerAudio(connectionId) {
+    const audioElement = playerAudioElements.get(connectionId);
+    if (!audioElement) return;
+    
+    console.log(`Removing car audio for player: ${connectionId}`);
+    stopPlayerAudio(audioElement);
+    audioElement.remove();
+    playerAudioElements.delete(connectionId);
+  }
+
+  function setPlayerAudioPosition(connectionId, position) {
+    const audioElement = getOrCreatePlayerAudio(connectionId, position);
+    // Position is already set in getOrCreatePlayerAudio
+  }
+
+  // Player label management - only for guilty players
   const connectedUsers = new Map(); // connectionId -> user object
   const guiltyPlayers = new Set(); // players who have hit trees and should show labels
   const playerShameTimers = new Map(); // connectionId -> timeout ID for clearing shame labels
@@ -357,6 +463,7 @@
     tree.collected = true;
     tree.hitBy = connectionId;
     console.log(`Tree ${tree.id} hit by player:`, connectionId);
+    console.log(`Tree audio element:`, tree.audio);
     
     // Add player to guilty list (will show floating labels)
     guiltyPlayers.add(connectionId);
@@ -391,6 +498,16 @@
     tree.warningLabels.forEach(label => label.setAttribute("visible", "false"));
     tree.despawnLabels.forEach(label => label.setAttribute("visible", "true"));
 
+    // Play tree despawn audio effect - right after RIP ENVIRONMENT labels appear
+    if (tree.audio) {
+      console.log(`RIP ENVIRONMENT labels now visible - playing audio for tree ${tree.id}`);
+      console.log(`Audio element:`, tree.audio);
+      console.log(`Timeline time:`, document.timeline.currentTime);
+      restartTreeAudio(tree.audio);
+    } else {
+      console.log(`No audio element found for tree ${tree.id}`);
+    }
+
     // Respawn tree after 10 seconds
     setTimeout(() => {
       console.log(`Tree ${tree.id} respawning...`);
@@ -409,6 +526,11 @@
       tree.despawnLabels.forEach(label => label.setAttribute("visible", "false"));
     }, 10000);
   }
+
+  // Debug: Check if all tree elements are found
+  trees.forEach(tree => {
+    console.log(`Tree ${tree.id} - Model:`, tree.model, `Probe:`, tree.probe, `Audio:`, tree.audio);
+  });
 
   // Set up event listeners for all trees
   trees.forEach(tree => {
@@ -539,12 +661,20 @@
     
     guiltyPlayers.delete(connectionId);
     clearUser(connectionId);
+    
+    // Clear player audio
+    clearPlayerAudio(connectionId);
   });
 
   playerTracker.addEventListener("positionenter", (event) => {
     const { connectionId, elementRelative, documentRelative } = event.detail;
     console.log("Player entered tracking area:", connectionId);
+    
+    // Update shame labels (only for guilty players)
     setLabelPosition(connectionId, elementRelative.position, elementRelative.rotation);
+    
+    // Update car audio (for all players)
+    setPlayerAudioPosition(connectionId, elementRelative.position);
   });
 
   playerTracker.addEventListener("positionmove", (event) => {
@@ -554,13 +684,23 @@
        this element when the document is reloaded. In this case, we need to create the user as if this is an
        enter event.
       */
+    
+    // Update shame labels (only for guilty players)
     setLabelPosition(connectionId, elementRelative.position, elementRelative.rotation);
+    
+    // Update car audio (for all players)
+    setPlayerAudioPosition(connectionId, elementRelative.position);
   });
 
   playerTracker.addEventListener("positionleave", (event) => {
     const { connectionId } = event.detail;
     console.log("Player left tracking area:", connectionId);
+    
+    // Clear shame labels
     clearUser(connectionId);
+    
+    // Clear car audio
+    clearPlayerAudio(connectionId);
   });
 
   // Debug elements removed for clean racing environment
