@@ -70,7 +70,15 @@ export class KartMesh extends Group {
         model.scale.setScalar(0.01); // Scale down 100x - GLB was too large
         model.position.set(0, 0.3, 0); // Lift up the kart slightly
         
-        console.log("Kart GLB model loaded successfully");
+        // Enable shadows for all meshes in the loaded model
+        model.traverse((child: Object3D) => {
+          if (child.type === "Mesh" || child.type === "SkinnedMesh") {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        
+        console.log("Kart GLB model loaded successfully with shadows enabled");
       } else {
         console.warn("Failed to load kart model, falling back to programmatic mesh");
         this.createFallbackKart();
@@ -99,6 +107,8 @@ export class KartMesh extends Group {
     const chassisGeometry = new BoxGeometry(1.4, 0.2, 1.8);
     this.kartBody = new Mesh(chassisGeometry, kartMaterial);
     this.kartBody.position.set(0, this.wheelRadius + 0.1, 0); // Position above wheels
+    this.kartBody.castShadow = true;
+    this.kartBody.receiveShadow = true;
     this.add(this.kartBody);
 
     // Driver seat area - positioned behind center
@@ -110,6 +120,8 @@ export class KartMesh extends Group {
     });
     this.kartSeat = new Mesh(seatGeometry, seatMaterial);
     this.kartSeat.position.set(0, this.wheelRadius + 0.4, -0.3); // Behind center, higher
+    this.kartSeat.castShadow = true;
+    this.kartSeat.receiveShadow = true;
     this.add(this.kartSeat);
 
     // Front bumper/nose cone
@@ -121,6 +133,8 @@ export class KartMesh extends Group {
     });
     this.kartBumper = new Mesh(bumperGeometry, bumperMaterial);
     this.kartBumper.position.set(0, this.wheelRadius + 0.2, 0.95); // At front
+    this.kartBumper.castShadow = true;
+    this.kartBumper.receiveShadow = true;
     this.add(this.kartBumper);
   }
 
@@ -140,6 +154,10 @@ export class KartMesh extends Group {
 
       // Rotate wheel to be perpendicular to ground (lying flat like car wheels)
       wheel.rotation.z = Math.PI / 2;
+
+      // Enable shadows for wheels
+      wheel.castShadow = true;
+      wheel.receiveShadow = true;
 
       this.wheels.push(wheel);
       this.add(wheel);
