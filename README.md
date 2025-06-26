@@ -15,6 +15,12 @@
 >
 > **🙏 Full credit to the MML.io team** for creating this amazing foundation for 3D web experiences.
 
+## 🎮 Live Demo
+
+**Try the live demo:** [https://kart-world-production.up.railway.app/](https://kart-world-production.up.railway.app/)
+
+Experience the enhanced kart racing gameplay directly in your browser - no downloads required!
+
 ---
 
 # (MML) 3D Web Experience
@@ -56,6 +62,34 @@ This repository includes the following published packages:
 - Multiple users can connect to the experience using just a web browser.
 - Users can interact simultaneously with the stateful MML documents.
 - Easy to deploy and extend with interactive MML content.
+
+## 🌳 Interactive Racing Environment Features
+
+The kart racing experience showcases advanced MML (Metaverse Markup Language) functionality through an interactive environmental system:
+
+### MML Capabilities Demonstrated
+
+**Collision Detection & Interaction**
+- Position probes for range-based collision detection
+- Interactive objects that respond to player proximity
+- State management for object interactions and respawning
+
+**Spatial Audio System**
+- Positional 3D audio that follows player movement
+- Dynamic audio element creation and cleanup
+- Multiple audio layers (engine sounds, environmental effects, background music)
+
+**Real-time Visual Effects**
+- Dynamic label creation and positioning
+- Smooth position interpolation and animations
+- Multi-user visual element management
+
+**Multiplayer State Synchronization**
+- Player tracking across large areas
+- Automatic connection/disconnection handling
+- Persistent object states shared across all users
+
+This demonstrates MML's power for creating rich, interactive multiplayer experiences with real-time state management, spatial audio, and dynamic content generation.
 
 ### Auth Flow
 - When the client page is rendered by the server, the server uses a UserAuthenticator implementation to determine if a session should be generated for the incoming http request and if so includes that session token on the client page.
