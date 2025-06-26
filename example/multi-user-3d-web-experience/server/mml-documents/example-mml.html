@@ -194,16 +194,7 @@
   x="0"
   y="0"
   z="0"
->
-  <m-audio 
-    id="background-music" 
-    src="https://mmlstorage.com/c857729f82e5ade637edfebfcc23b1743f6743099c73c4eecf92d058897b6349" 
-    volume="0.6" 
-    loop="true" 
-    start-time="0"
-    enabled="true"
-  ></m-audio>
-</m-position-probe>
+></m-position-probe>
 
 <!-- Container for dynamic player labels -->
 <m-group id="player-labels-container"></m-group>
@@ -367,7 +358,8 @@
   const labelsContainer = document.getElementById("player-labels-container");
 
   // Player audio management - for ALL players
-  const playerAudioElements = new Map(); // connectionId -> audio element
+  const playerAudioElements = new Map(); // connectionId -> car audio element
+  const playerMusicElements = new Map(); // connectionId -> background music element
   const audioContainer = document.getElementById("player-audio-container");
 
   // Audio control function (similar to the restart function in your example)
@@ -435,19 +427,72 @@
     return audioElement;
   }
 
-  function clearPlayerAudio(connectionId) {
-    const audioElement = playerAudioElements.get(connectionId);
-    if (!audioElement) return;
+  // Create or get background music element for a player
+  function getOrCreatePlayerMusic(connectionId, position) {
+    let musicElement = playerMusicElements.get(connectionId);
+    if (musicElement) {
+      // Update position
+      musicElement.setAttribute("x", position.x);
+      musicElement.setAttribute("y", position.y);
+      musicElement.setAttribute("z", position.z);
+      return musicElement;
+    }
     
-    console.log(`Removing car audio for player: ${connectionId}`);
-    stopPlayerAudio(audioElement);
-    audioElement.remove();
-    playerAudioElements.delete(connectionId);
+    // Create new background music element for this player
+    musicElement = document.createElement("m-audio");
+    musicElement.setAttribute("id", `player-music-audio-${connectionId}`);
+    musicElement.setAttribute("src", "https://mmlstorage.com/c857729f82e5ade637edfebfcc23b1743f6743099c73c4eecf92d058897b6349");
+    musicElement.setAttribute("volume", "0.6");
+    musicElement.setAttribute("loop", "true");
+    musicElement.setAttribute("enabled", "true");
+    
+    // Set initial position
+    musicElement.setAttribute("x", position.x);
+    musicElement.setAttribute("y", position.y);
+    musicElement.setAttribute("z", position.z);
+    
+    // Add position smoothing
+    const attributeLerp = document.createElement("m-attr-lerp");
+    attributeLerp.setAttribute("attr", "all");
+    attributeLerp.setAttribute("duration", "100");
+    musicElement.appendChild(attributeLerp);
+    
+    audioContainer.appendChild(musicElement);
+    playerMusicElements.set(connectionId, musicElement);
+    
+    // Start the music
+    restartPlayerAudio(musicElement);
+    
+    console.log(`Created background music for player: ${connectionId}`);
+    return musicElement;
+  }
+
+  function clearPlayerAudio(connectionId) {
+    // Clear car audio
+    const audioElement = playerAudioElements.get(connectionId);
+    if (audioElement) {
+      console.log(`Removing car audio for player: ${connectionId}`);
+      stopPlayerAudio(audioElement);
+      audioElement.remove();
+      playerAudioElements.delete(connectionId);
+    }
+    
+    // Clear background music
+    const musicElement = playerMusicElements.get(connectionId);
+    if (musicElement) {
+      console.log(`Removing background music for player: ${connectionId}`);
+      stopPlayerAudio(musicElement);
+      musicElement.remove();
+      playerMusicElements.delete(connectionId);
+    }
   }
 
   function setPlayerAudioPosition(connectionId, position) {
+    // Create/update car audio
     const audioElement = getOrCreatePlayerAudio(connectionId, position);
-    // Position is already set in getOrCreatePlayerAudio
+    // Create/update background music
+    const musicElement = getOrCreatePlayerMusic(connectionId, position);
+    // Positions are already set in the respective functions
   }
 
   // Player label management - only for guilty players
